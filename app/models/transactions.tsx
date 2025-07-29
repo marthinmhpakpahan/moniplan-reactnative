@@ -1,9 +1,9 @@
 export interface Transactions {
-    key: string;
+    id: string;
+    date: string;
     user_id: string;
     category_id: string;
+    category_name: string;
     amount: number;
-    type: string;
     remarks: string;
-    transaction_date: string;
 }

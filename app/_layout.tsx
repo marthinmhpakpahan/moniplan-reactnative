@@ -14,5 +14,5 @@ export default function RootLayout() {
     }
   }, [fontsLoaded]);
 
-  return <Slot />;
+  return (<Slot />);
 }
