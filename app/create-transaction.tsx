@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { db } from './firebaseConfig';
-import { Categories } from './models/categories';
+import { Categories } from './models/Categories';
 
 export default function CreateTransaction() {
 

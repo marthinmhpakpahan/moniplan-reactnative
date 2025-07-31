@@ -13,8 +13,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { getUserSession } from '@/utils/session';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import { Categories } from '../models/categories';
-import { Transactions } from '../models/transactions';
+import { Categories } from '../models/Categories';
+import { Transactions } from '../models/Transactions';
+
+// SERVICES
+import { fetchCategories } from '../services/categories';
 
 export default function Dashboard() {
   const currentDate = new Date();
@@ -84,6 +87,7 @@ export default function Dashboard() {
         user_id: user.id,
         name: categoryName,
         budget: totalBudget,
+        remaining_budget: "0",
         created_date: new Date(),
       });
       setRefreshCategories(true)
@@ -100,30 +104,12 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const user = await getUserSession();
-        const q = query(
-          collection(db, "categories"),
-          where("user_id", "==", user.id)
-        );
-        const querySnapshot = await getDocs(q);
-        const categories: Categories[] = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            user_id: data.user_id,
-            name: data.name,
-            budget: data.budget
-          };
-        });
-        setCategories(categories);
-      } catch (err) {
-        console.error("Error fetching categories: ", err);
-      }
+    const loadCategories = async () => {
+      const data = await fetchCategories();
+      setCategories(data);
     };
 
-    fetchCategories();
+    loadCategories();
   }, [refreshCategories]);
 
   useEffect(() => {
@@ -194,7 +180,7 @@ export default function Dashboard() {
         ) : (
           <></>
         )}
-        <Pressable onPress={showFormAddCategory} className='flex justify-center items-center bg-white border border-black mx-1 my-1 px-3 border-b-[3px] border-r-[3px]'>
+        <Pressable onPress={showFormAddCategory} className='flex justify-center items-center bg-white border border-black py-1 mx-1 my-1 px-3 border-b-[3px] border-r-[3px]'>
           <FontAwesome5 name="plus" size={12} color="black" />
         </Pressable>
       </View>
@@ -215,12 +201,11 @@ export default function Dashboard() {
           <></>
         )}
       </View>
-      <Pressable onPress={handleAddTransaction} className='absolute bottom-0 right-0 border-2 border-black rounded-xl p-4 m-3 z-40'>
+      <Pressable onPress={handleAddTransaction} className='absolute bottom-0 right-0 border-2 border-black rounded-xl p-4 m-3 z-2'>
         <Text><FontAwesome5 name="plus" size={24} color="black"></FontAwesome5></Text>
       </Pressable>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView className='flex-1 z-10 bg-white'>
         <BottomSheetModalProvider>
-          <View className="flex-1 px-2 z-20">
             <BottomSheetModal
               ref={bottomSheetModalRef}
               onChange={handleSheetChanges}
@@ -238,34 +223,34 @@ export default function Dashboard() {
                     keyboardShouldPersistTaps="handled"
                   >
                     <View className='flex flex-col py-3 px-3'>
-                      <Text className='text-lg font-bold text-center'>
+                      <Text className='text-xl font-bold text-center'>
                         Add New Category with Budget!
                       </Text>
 
                       <View className='mt-4'>
-                        <Text className='text-slate-600 py-1'>Category Name</Text>
+                        <Text className='text-slate-800 py-1'>Category Name</Text>
                         <BottomSheetTextInput
                           value={categoryName}
                           onChangeText={setCategoryName}
-                          className='border border-slate-200 rounded-lg'
+                          className='border border-slate-500'
                         />
                       </View>
 
                       <View className='mt-2'>
-                        <Text className='text-slate-600 py-1'>Total Budget (Rp)</Text>
+                        <Text className='text-slate-800 py-1'>Total Budget (Rp)</Text>
                         <BottomSheetTextInput
                           value={totalBudget}
                           onChangeText={setTotalBudget}
-                          className='border border-slate-200 rounded-lg'
+                          className='border border-slate-500'
                         />
                       </View>
 
                       <View className='flex flex-row justify-end mt-4'>
                         <Pressable
                           onPress={handleAddCategory}
-                          className='border border-white w-max px-10 py-2 rounded-xl bg-green-600'
+                          className='border-2 border-black px-5 py-1'
                         >
-                          <Text className='text-white font-bold'>Save</Text>
+                          <Text className='text-black font-bold'>Save</Text>
                         </Pressable>
                       </View>
                     </View>
@@ -273,15 +258,9 @@ export default function Dashboard() {
                 </KeyboardAvoidingView>
               </BottomSheetView>
             </BottomSheetModal>
-          </View>
-        </BottomSheetModalProvider>
-      </GestureHandlerRootView>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <BottomSheetModalProvider>
-          <View className="flex-1 px-2">
             <BottomSheetModal
               ref={detailCategorySheetModalRef}
-              onChange={handleSheetChanges}
+              onChange={handleSheetDetailCategoryChanges}
               keyboardBehavior="interactive"
               keyboardBlurBehavior="restore"
             >
@@ -292,10 +271,11 @@ export default function Dashboard() {
                   keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
                 >
                   <ScrollView
+                  className=''
                     contentContainerStyle={{ padding: 16 }}
                     keyboardShouldPersistTaps="handled"
                   >
-                    <View className='flex flex-col py-3 px-3 bg-white z-20'>
+                    <View className='flex flex-col pt-1 pb-5 px-3 bg-white z-20'>
                       <Text className='text-2xl font-bold text-center uppercase border-b-2'>
                         Detail Category
                       </Text>
@@ -319,7 +299,6 @@ export default function Dashboard() {
                 </KeyboardAvoidingView>
               </BottomSheetView>
             </BottomSheetModal>
-          </View>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
     </View>
