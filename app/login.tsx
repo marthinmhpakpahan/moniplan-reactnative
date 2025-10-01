@@ -14,7 +14,7 @@ import {
     View,
 } from 'react-native';
 import { saveUserSession } from '../utils/session';
-import { db } from './firebaseConfig';
+import { login } from './services/users';
 
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -35,27 +35,13 @@ export default function Login() {
     const handleLogin = async () => {
         setLoading(true);
         setError('');
-
         try {
-            const usersRef = collection(db, 'users');
-            const q = query(
-                usersRef,
-                where('username', '==', username),
-                where('password', '==', password)
-            );
-            const snapshot = await getDocs(q);
-
-            if (!snapshot.empty) {
-                const userData = snapshot.docs[0].data();
-                userData.id = snapshot.docs[0].id
-                console.log('Login success:', userData);
-
-                // Save user session in AsyncStorage
-                saveUserSession(userData)
-                redirectToDashboard()
-            } else {
-                setError('Email atau password salah.');
-            }
+            console.log("login screen", username + " = " + password)
+            const response = await login(username, password)
+            const user = response.user;
+            user.token = response.token;
+            saveUserSession(user)
+            redirectToDashboard()
         } catch (err) {
             setError('Terjadi kesalahan saat login.');
             console.error('Login error:', err);
@@ -95,7 +81,7 @@ export default function Login() {
                         ) : null}
 
                         <View className="mb-4">
-                            <Text className="mb-1">Username</Text>
+                            <Text className="mb-1">Email</Text>
                             <TextInput
                                 className="border border-slate-400 rounded-lg px-3 py-2"
                                 value={username}

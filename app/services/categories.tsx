@@ -1,28 +1,47 @@
-import { getUserSession } from '@/utils/session';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
-import { Categories } from '../models/Categories';
+import { getUserSession } from "@/utils/session";
+import axios from "axios";
 
-export const fetchCategories = async (): Promise<Categories[]> => {
+const BASE_URL = "http://192.168.1.28:8080"
+
+type WhereFilterOp =
+  "<" | "<=" | "==" | "!=" | ">=" | ">" |
+  "array-contains" | "in" | "not-in" | "array-contains-any";
+
+export const indexCategory = async (_date: string) => {
   try {
-    const user = await getUserSession();
-    const q = query(
-      collection(db, "categories"),
-      where("user_id", "==", user.id)
-    );
-    const querySnapshot = await getDocs(q);
-    const categories: Categories[] = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        user_id: data.user_id,
-        name: data.name,
-        total_budget: data.total_budget,
-      };
+    const user = await getUserSession()
+    const response = await axios.get(BASE_URL + "/api/v1/category", {
+      headers: {
+        "Authorization": "Bearer " + user.token
+      }
     });
-    return categories;
-  } catch (err) {
-    console.error("Error fetching categories: ", err);
-    return [];
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      console.error("Index Category failed:", error.response.data);
+      return error.response;
+      throw new Error(error.response.data.message || "Index Category failed");
+    }
+    throw error;
+  }
+};
+
+export const createCategory = async (_name: string, _month: Number, _year: Number, _amount: Number) => {
+  try {
+    const user = await getUserSession()
+    const response = await axios.post(BASE_URL + "/api/v1/category/create", {
+      name: _name, month: _month, year: _year, amount: _amount
+    }, {
+      headers: {
+        "Authorization": "Bearer " + user.token
+      }
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      console.error("Create Category failed:", error.response.data);
+      throw new Error(error.response.data.message || "Create Category failed");
+    }
+    throw error;
   }
 };

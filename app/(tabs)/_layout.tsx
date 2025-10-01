@@ -7,7 +7,7 @@ export default function TabLayout() {
 
   const redirectToLoginPage = () => {
     router.push("/login")
-}
+  }
 
   function handleLogout() {
     removeUserSession()

@@ -10,23 +10,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { getUserSession } from '@/utils/session';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
 import { Categories } from '../models/Categories';
 import { Transactions } from '../models/Transactions';
 
 // SERVICES
-import { fetchCategories } from '../services/categories';
+import { createCategory, indexCategory } from '../services/categories';
+import { indexTransaction } from '../services/transactions';
 
 export default function Dashboard() {
   const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
+  const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
   const monthLabel = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
+
+  console.log("Dashboard: " + currentDate + " - " + currentMonth + " - " + currentYear + " == " + month + " - " + year)
 
   const [categories, setCategories] = useState<Categories[]>([]);
   const [transactions, setTransactions] = useState<Transactions[]>([]);
@@ -49,25 +48,27 @@ export default function Dashboard() {
     detailCategorySheetModalRef.current?.present();
   }, []);
   const handleSheetDetailCategoryChanges = useCallback((index: number) => {
-    console.log('handleSheetChanges', index);
+    console.log('handleSheetDetailCategoryChanges', index);
   }, []);
 
   function increaseMonth() {
-    if (month == 11) {
-      setMonth(0)
+    if (month == 12) {
+      setMonth(1)
       setYear(year + 1)
     } else {
       setMonth(month + 1)
     }
+    console.log("increaseMonth", month+"-"+year)
   }
 
   function decreaseMonth() {
-    if (month == 0) {
-      setMonth(11)
+    if (month == 1) {
+      setMonth(12)
       setYear(year - 1)
     } else {
       setMonth(month - 1)
     }
+    console.log("decreaseMonth", month+"-"+year)
   }
 
   function showFormAddCategory() {
@@ -81,15 +82,10 @@ export default function Dashboard() {
 
   async function handleAddCategory() {
     try {
-      const user = await getUserSession();
-      console.log(user)
-      await addDoc(collection(db, "categories"), {
-        user_id: user.id,
-        name: categoryName,
-        budget: totalBudget,
-        remaining_budget: "0",
-        created_date: new Date(),
-      });
+      console.log("handleAddCategory", totalBudget)
+      const response = await createCategory(
+        categoryName, month, year, parseInt(totalBudget)
+      );
       setRefreshCategories(true)
       bottomSheetModalRef.current?.close();
     } catch (e) {
@@ -100,13 +96,14 @@ export default function Dashboard() {
   }
 
   function handleAddTransaction() {
+    console.log("handleAddTransaction clicked!")
     router.push("/create-transaction")
   }
 
   useEffect(() => {
     const loadCategories = async () => {
-      const data = await fetchCategories();
-      setCategories(data);
+      const response = await indexCategory("");
+      setCategories(response.data || []);
     };
 
     loadCategories();
@@ -115,46 +112,17 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const user = await getUserSession();
-  
-        // 1. Fetch all categories first
-        const categoriesSnapshot = await getDocs(collection(db, "categories"));
-        const categoryMap = new Map();
-        categoriesSnapshot.forEach((doc) => {
-          const data = doc.data();
-          categoryMap.set(doc.id, data.name);
-        });
-  
-        // 2. Fetch all user transactions
-        const q = query(
-          collection(db, "transactions"),
-          where("user_id", "==", user.id)
-        );
-        const querySnapshot = await getDocs(q);
-  
-        // 3. Map with category name
-        const transactions: Transactions[] = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            user_id: data.user_id,
-            category_id: data.category_id,
-            date: data.date,
-            amount: data.amount,
-            remarks: data.remarks,
-            category_name: categoryMap.get(data.category_id) || "Unknown"
-          };
-        });
-  
-        setTransactions(transactions);
+        console.log("fetchTransactions", month+"-"+year)
+        const response = await indexTransaction(month, year);
+        setTransactions(response.data || []);
       } catch (err) {
         console.error("Error fetching transactions: ", err);
       }
     };
-  
+
     fetchTransactions();
-  }, []);
-  
+  }, [month]);
+
 
   return (
     <View className="flex-1 px-2">
@@ -162,7 +130,7 @@ export default function Dashboard() {
         <Pressable onPress={decreaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-l-[3px]'>
           <FontAwesome5 name="chevron-left" size={16} color="black" />
         </Pressable>
-        <Text className='font-bold px-3'>{monthLabel[month]} {year}</Text>
+        <Text className='font-bold px-3'>{monthLabel[month-1]} {year}</Text>
         <Pressable onPress={increaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
           <FontAwesome5 name="chevron-right" size={16} color="black" />
         </Pressable>
@@ -171,10 +139,10 @@ export default function Dashboard() {
         <Text className="text-lg font-bold">Categories</Text>
       </View>
       <View className='flex flex-row flex-wrap'>
-        {categories.length > 0 ? (
+        {categories?.length > 0 ? (
           categories.map((item) => ( // Use map here
             <Pressable onPress={() => showDetailCategoryInfo(item)} key={item.id} className='border border-black mr-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
-              <Text className='text-xs'>{item.name}</Text>
+              <Text className='text-sm font-semibold'>{item.name.toUpperCase()}</Text>
             </Pressable>
           ))
         ) : (
@@ -184,121 +152,129 @@ export default function Dashboard() {
           <FontAwesome5 name="plus" size={12} color="black" />
         </Pressable>
       </View>
-      <View className='flex flex-row items-center pt-3'>
+      <View className='flex flex-row items-center pt-3 justify-between pr-2'>
+        <View className='flex flex-row items-center'>
         <Text className="text-lg font-bold">Transactions</Text>
+        <Pressable onPress={handleAddTransaction} className='border-2 border-black px-3 py-1 m-3 z-100'>
+          <Text><FontAwesome5 name="plus" size={12} color="black"></FontAwesome5></Text>
+        </Pressable>
+        </View>
+        <View className='flex flex-row items-center'>
+          <Text>Rp. 1000</Text>
+          <Text>Rp. 3000</Text>
+        </View>
       </View>
       <View>
-        {transactions.length > 0 ? (
+        {transactions?.length > 0 ? (
           transactions.map((item) => ( // Use map here
             <Pressable key={item.id} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
-              <Text className='text-xs'>{item.category_name}</Text>
-              <Text className='text-xs'>{item.date}</Text>
-              <Text className='text-xs'>Rp. {item.amount}</Text>
-              <Text className='text-xs'>{item.remarks}</Text>
+              <View className='flex flex-row justify-between items-center'>
+              <Text className='text-lg font-semibold'>{item.category_name.toUpperCase()}</Text>
+              <Text className='text-xs font-semibold'>{item.transaction_date}</Text>
+              </View>
+              <Text className='text-xl font-bold'>Rp. {item.amount}</Text>
+              <Text className='text-sm font-normal mt-1'>{item.remarks}</Text>
             </Pressable>
           ))
         ) : (
           <></>
         )}
       </View>
-      <Pressable onPress={handleAddTransaction} className='absolute bottom-0 right-0 border-2 border-black rounded-xl p-4 m-3 z-2'>
-        <Text><FontAwesome5 name="plus" size={24} color="black"></FontAwesome5></Text>
-      </Pressable>
-      <GestureHandlerRootView className='flex-1 z-10 bg-white'>
+      <GestureHandlerRootView className='flex-1 z-3 bg-white'>
         <BottomSheetModalProvider>
-            <BottomSheetModal
-              ref={bottomSheetModalRef}
-              onChange={handleSheetChanges}
-              keyboardBehavior="interactive"
-              keyboardBlurBehavior="restore"
-            >
-              <BottomSheetView style={{ flex: 1 }}>
-                <KeyboardAvoidingView
-                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                  style={{ flex: 1 }}
-                  keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          <BottomSheetModal
+            ref={bottomSheetModalRef}
+            onChange={handleSheetChanges}
+            keyboardBehavior="interactive"
+            keyboardBlurBehavior="restore"
+          >
+            <BottomSheetView style={{ flex: 1 }}>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+              >
+                <ScrollView
+                  contentContainerStyle={{ padding: 16 }}
+                  keyboardShouldPersistTaps="handled"
                 >
-                  <ScrollView
-                    contentContainerStyle={{ padding: 16 }}
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    <View className='flex flex-col py-3 px-3'>
-                      <Text className='text-xl font-bold text-center'>
-                        Add New Category with Budget!
-                      </Text>
+                  <View className='flex flex-col py-3 px-3'>
+                    <Text className='text-xl font-bold text-center'>
+                      Add New Category with Budget!
+                    </Text>
 
-                      <View className='mt-4'>
-                        <Text className='text-slate-800 py-1'>Category Name</Text>
-                        <BottomSheetTextInput
-                          value={categoryName}
-                          onChangeText={setCategoryName}
-                          className='border border-slate-500'
-                        />
-                      </View>
-
-                      <View className='mt-2'>
-                        <Text className='text-slate-800 py-1'>Total Budget (Rp)</Text>
-                        <BottomSheetTextInput
-                          value={totalBudget}
-                          onChangeText={setTotalBudget}
-                          className='border border-slate-500'
-                        />
-                      </View>
-
-                      <View className='flex flex-row justify-end mt-4'>
-                        <Pressable
-                          onPress={handleAddCategory}
-                          className='border-2 border-black px-5 py-1'
-                        >
-                          <Text className='text-black font-bold'>Save</Text>
-                        </Pressable>
-                      </View>
+                    <View className='mt-4'>
+                      <Text className='text-slate-800 py-1'>Category Name</Text>
+                      <BottomSheetTextInput
+                        value={categoryName}
+                        onChangeText={setCategoryName}
+                        className='border border-slate-500'
+                      />
                     </View>
-                  </ScrollView>
-                </KeyboardAvoidingView>
-              </BottomSheetView>
-            </BottomSheetModal>
-            <BottomSheetModal
-              ref={detailCategorySheetModalRef}
-              onChange={handleSheetDetailCategoryChanges}
-              keyboardBehavior="interactive"
-              keyboardBlurBehavior="restore"
-            >
-              <BottomSheetView style={{ flex: 1 }}>
-                <KeyboardAvoidingView
-                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                  style={{ flex: 1 }}
-                  keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-                >
-                  <ScrollView
+
+                    <View className='mt-2'>
+                      <Text className='text-slate-800 py-1'>Total Budget (Rp)</Text>
+                      <BottomSheetTextInput
+                        value={totalBudget}
+                        onChangeText={setTotalBudget}
+                        className='border border-slate-500'
+                      />
+                    </View>
+
+                    <View className='flex flex-row justify-end mt-4'>
+                      <Pressable
+                        onPress={handleAddCategory}
+                        className='border-2 border-black px-5 py-1'
+                      >
+                        <Text className='text-black font-bold'>Save</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </ScrollView>
+              </KeyboardAvoidingView>
+            </BottomSheetView>
+          </BottomSheetModal>
+          <BottomSheetModal
+            ref={detailCategorySheetModalRef}
+            onChange={handleSheetDetailCategoryChanges}
+            keyboardBehavior="interactive"
+            keyboardBlurBehavior="restore"
+          >
+            <BottomSheetView style={{ flex: 1 }}>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+              >
+                <ScrollView
                   className=''
-                    contentContainerStyle={{ padding: 16 }}
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    <View className='flex flex-col pt-1 pb-5 px-3 bg-white z-20'>
-                      <Text className='text-2xl font-bold text-center uppercase border-b-2'>
-                        Detail Category
-                      </Text>
+                  contentContainerStyle={{ padding: 16 }}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <View className='flex flex-col pt-1 pb-5 px-3 bg-white z-20'>
+                    <Text className='text-2xl font-bold text-center uppercase border-b-2'>
+                      Detail Category
+                    </Text>
 
-                      <View className='mt-4'>
-                        <Text className='text-slate-600 py-1'>Name</Text>
-                        <Text className='font-bold text-3xl'>{selectedCategory?.name}</Text>
-                      </View>
-
-                      <View className='mt-2'>
-                        <Text className='text-slate-600 py-1'>Total Budget</Text>
-                        <Text className='font-bold text-3xl'>Rp. {selectedCategory?.budget}</Text>
-                      </View>
-
-                      <View className='mt-2'>
-                        <Text className='text-slate-600 py-1'>Remaining Budget</Text>
-                        <Text className='font-bold text-3xl'>Rp. -</Text>
-                      </View>
+                    <View className='mt-4'>
+                      <Text className='text-slate-600 py-1'>Name</Text>
+                      <Text className='font-bold text-3xl'>{selectedCategory?.name}</Text>
                     </View>
-                  </ScrollView>
-                </KeyboardAvoidingView>
-              </BottomSheetView>
-            </BottomSheetModal>
+
+                    <View className='mt-2'>
+                      <Text className='text-slate-600 py-1'>Total Budget</Text>
+                      <Text className='font-bold text-3xl'>Rp. {selectedCategory?.amount}</Text>
+                    </View>
+
+                    <View className='mt-2'>
+                      <Text className='text-slate-600 py-1'>Remaining Budget</Text>
+                      <Text className='font-bold text-3xl'>Rp. -</Text>
+                    </View>
+                  </View>
+                </ScrollView>
+              </KeyboardAvoidingView>
+            </BottomSheetView>
+          </BottomSheetModal>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
     </View>

@@ -2,12 +2,11 @@ import { getUserSession } from '@/utils/session';
 import { FontAwesome5 } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { db } from './firebaseConfig';
 import { Categories } from './models/Categories';
+import { indexCategory } from './services/categories';
 
 export default function CreateTransaction() {
 
@@ -37,22 +36,9 @@ export default function CreateTransaction() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-              const user = await getUserSession();
-              const q = query(
-                collection(db, "categories"),
-                where("user_id", "==", user.id)
-              );
-              const querySnapshot = await getDocs(q);
-              const categories: Categories[] = querySnapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                  id: doc.id,
-                  user_id: data.user_id,
-                  name: data.name,
-                  budget: data.budget
-                };
-              });
-              setCategories(categories);
+              const response = await indexCategory("")
+              console.log("fetchCategories", response.data)
+              setCategories(response.data);
             } catch (err) {
               console.error("Error fetching categories: ", err);
             }
@@ -87,13 +73,7 @@ export default function CreateTransaction() {
             console.log("Save button triggered!")
             try {
                 const user = await getUserSession();
-                await addDoc(collection(db, "transactions"), {
-                  user_id: user.id,
-                  date: date.toString(),
-                  amount: amount,
-                  category_id: categoryID,
-                  remarks: remarks
-                });
+                
                 Alert.alert(
                     "Important Message",
                     "You've successfully added new data! Do you want to go to dashboard or add new one?",
@@ -171,7 +151,7 @@ export default function CreateTransaction() {
                             {categories.length > 0 ? (
                                 categories.map((item) => ( // Use map here
                                     <Pressable onPress={() => { setSelectedCategory(item.id, item.name) }} key={item.id} className='px-3 py-3 border-[1px] border-slate-200'>
-                                        <Text className='text-center text-lg'>{item.name} ({item.budget.length <= 6 ? item.budget.slice(0, -3) + "K" : item.budget.slice(0, -6) + "M"})</Text>
+                                        <Text className='text-center text-lg'>{item.name} ({item.amount.toString().length <= 6 ? item.amount.toString().slice(0, -3) + "K" : item.amount.toString().slice(0, -6) + "M"})</Text>
                                     </Pressable>
                                 ))
                             ) : (

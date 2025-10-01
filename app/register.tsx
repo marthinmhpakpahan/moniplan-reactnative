@@ -13,12 +13,11 @@ import {
 } from 'react-native';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import { register } from './services/users';
 
 export default function Register() {
   const [full_name, setFullName] = useState('');
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [phone_no, setPhoneNo] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -39,14 +38,10 @@ export default function Register() {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      await addDoc(collection(db, "users"), {
-        full_name: full_name,
-        username: username,
-        password: password,
-        email: email,
-        phone_no: phone_no
-      });
-      redirectToLoginPage()
+      const response = await register(full_name, email, password)
+      if(response.token) {
+        redirectToLoginPage()
+      }
     } catch (e) {
       console.error("Error adding document: ", e);
     }
@@ -77,7 +72,7 @@ export default function Register() {
             <View className="mb-4">
               <Text className="mb-1">Full Name</Text>
               <TextInput
-                className="border border-slate-400 rounded-lg px-3 py-2"
+                className="border border-gray-500 py-2 my-1 px-3"
                 value={full_name}
                 onChangeText={setFullName}
               />
@@ -86,42 +81,24 @@ export default function Register() {
             <View className="mb-4">
               <Text className="mb-1">Email</Text>
               <TextInput
-                className="border border-slate-400 rounded-lg px-3 py-2"
+                className="border border-black py-2 my-1 px-3"
                 value={email}
                 onChangeText={setEmail}
-              />
-            </View>
-
-            <View className="mb-4">
-              <Text className="mb-1">Phone No</Text>
-              <TextInput
-                className="border border-slate-400 rounded-lg px-3 py-2"
-                value={phone_no}
-                onChangeText={setPhoneNo}
-              />
-            </View>
-
-            <View className="mb-4">
-              <Text className="mb-1">Username</Text>
-              <TextInput
-                className="border border-slate-400 rounded-lg px-3 py-2"
-                value={username}
-                onChangeText={setUsername}
               />
             </View>
 
             <View className="mb-6">
               <Text className="mb-1">Password</Text>
               <TextInput
-                className="border border-slate-400 rounded-lg px-3 py-2"
+                className="border border-black py-2 my-1 px-3"
                 value={password}
                 secureTextEntry
                 onChangeText={setPassword}
               />
             </View>
 
-            <Pressable onPress={handleRegister} className="bg-blue-600 py-3 rounded-lg mb-3">
-              <Text className="text-white font-semibold text-center">Register</Text>
+            <Pressable onPress={handleRegister} className="flex justify-center items-center bg-white border border-black py-2 my-1 px-3 border-b-[3px] border-r-[3px]">
+              <Text className="text-black font-aestera text-center">REGISTER</Text>
             </Pressable>
 
             <Pressable onPress={redirectToLoginPage}>
