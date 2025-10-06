@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { saveUserSession } from '../utils/session';
 import { login } from './services/users';
+import { redirectToDashboard, redirectToRegisterPage } from '@/utils/helper';
 
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -49,14 +50,6 @@ export default function Login() {
         } finally {
             setLoading(false);
         }
-    };
-
-    const redirectToDashboard = () => {
-        router.push("/(tabs)/dashboard")
-    }
-
-    const redirectToRegisterPage = () => {
-        router.push('/register');
     };
 
     return (

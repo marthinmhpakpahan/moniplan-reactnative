@@ -1,4 +1,5 @@
-import { getUserSession } from "@/utils/session";
+import { redirectToDashboard } from "@/utils/helper";
+import { getUserSession, removeUserSession } from "@/utils/session";
 import axios from "axios";
 
 const BASE_URL = "http://192.168.1.28:8080"
@@ -18,10 +19,9 @@ export const indexCategory = async (_month: Number, _year: Number) => {
     console.log("indexCategory: ", response.data)
     return response.data;
   } catch (error: any) {
-    if (error.response) {
-      console.error("Index Category failed:", error.response.data);
-      return error.response;
-    }
+    console.error("Index Category failed:", error.response.data);
+    removeUserSession()
+    redirectToDashboard()
     throw error;
   }
 };

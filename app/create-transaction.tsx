@@ -1,5 +1,5 @@
 import { getUserSession } from '@/utils/session';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -7,7 +7,7 @@ import { Alert, Modal, Platform, Pressable, Text, TextInput, View } from "react-
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Categories } from './models/Categories';
 import { indexCategory } from './services/categories';
-import { getCurrentDate, getRandomInt } from '@/utils/helper';
+import { formatDate, getCurrentDate, getRandomInt } from '@/utils/helper';
 import { createTransaction } from './services/transactions';
 
 export default function CreateTransaction() {
@@ -17,7 +17,6 @@ export default function CreateTransaction() {
     const [categoryID, setCategoryID] = useState("")
     const [categoryName, setCategoryName] = useState("")
     const [categories, setCategories] = useState<Categories[]>([]);
-    const monthLabel = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
     const [date, setDate] = useState(currentDate);
     console.log("Create Transaction current date: ", formatDate(currentDate));
@@ -31,10 +30,6 @@ export default function CreateTransaction() {
         setShowDatePicker(Platform.OS === 'ios'); // iOS keeps picker open
         setDate(_currentDate);
     };
-
-    function formatDate(value: Date) {
-        return value.getDate() + " " + monthLabel[value.getMonth()] + " " + value.getFullYear()
-    }
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -97,30 +92,35 @@ export default function CreateTransaction() {
         <GestureHandlerRootView>
             <View className='flex flex-col'>
                 <View className='flex flex-row items-center mt-8 pb-3 px-2 border-b-2 border-gray-500'>
-                    <Pressable onPress={redirectToDashboard} className='border px-2 py-1'>
+                    <Pressable onPress={redirectToDashboard} className='px-2 py-1'>
                         <FontAwesome5 name="arrow-left" size={24} />
                     </Pressable>
                     <Text className='ml-4 text-xl font-bold'>Create Transaction</Text>
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Date</Text>
-                    <TextInput value={formatDate(date)} onPress={() => { setShowDatePicker(true) }} className='col-start-1 grow col-span-4 border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
+                    <TextInput showSoftInputOnFocus={false} value={formatDate(date)} onPress={() => { setShowDatePicker(true) }} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Amount</Text>
-                    <TextInput value={amount.toString() == "0" || amount.toString() == "" ? "0" : amount.toString()} onChangeText={text => setAmount(parseInt(text == "0" || text == "" ? "0" : text))} className='col-start-1 grow col-span-4 border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
+                    <TextInput value={amount.toString() == "0" || amount.toString() == "" ? "0" : amount.toString()} onChangeText={text => setAmount(parseInt(text == "0" || text == "" ? "0" : text))} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Category</Text>
-                    <TextInput value={categoryName} onPress={() => setModalVisible(true)} className='col-start-1 grow col-span-4 border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
+                    <TextInput showSoftInputOnFocus={false} value={categoryName.toUpperCase()} onPress={() => setModalVisible(true)} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Note</Text>
-                    <TextInput value={remarks} onChangeText={text => setRemarks(text)} className='col-start-1 grow col-span-4 border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
+                    <TextInput multiline numberOfLines={5} textAlignVertical="top" value={remarks} onChangeText={text => setRemarks(text)} className='col-start-1 grow col-span-4 font-bold border-2 border-slate-400 w-max h-[100px]'></TextInput>
                 </View>
                 <View className='flex flex-row mt-6 px-3 justify-end'>
-                    <Pressable onPress={handleSaveButton} className='border-1 border-slate-300 px-8 py-2 mr-1 bg-green-500'><Text className='text-center text-white'>Save</Text></Pressable>
-                    <Pressable className='border px-8 py-2 ml-1 border-slate-400'><Text>New</Text></Pressable>
+                    <Pressable className='flex flex-row items-center border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
+                        <Ionicons name="reload-circle-outline" size={13} color="black" />
+                        <Text className='font-bold ml-2'>Reset Form</Text>
+                    </Pressable>
+                    <Pressable onPress={handleSaveButton} className='flex flex-row items-center border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
+                        <FontAwesome5 name="save" size={13} color="black" />
+                        <Text className='font-bold ml-2'>Save</Text></Pressable>
                 </View>
             </View>
             {showDatePicker && (
@@ -138,13 +138,13 @@ export default function CreateTransaction() {
                 onRequestClose={() => setModalVisible(false)} // For Android back button
             >
                 <View className='flex-1 items-center justify-center '>
-                    <View className='flex flex-col border bg-white w-2/3'>
-                        <Text className='text-center my-6 font-bold text-xl'>Select Category!</Text>
-                        <View className='flex flex-col'>
+                    <View className='flex flex-col border bg-white w-2/3 border-b-[5px] border-t-[2px] border-l-[2px] border-r-[2px]'>
+                        <Text className='text-center my-6 font-bold text-2xl uppercase'>Select Category</Text>
+                        <View className='flex flex-col border-t-[2px]'>
                             {categories.length > 0 ? (
                                 categories.map((item) => ( // Use map here
-                                    <Pressable onPress={() => { setSelectedCategory(item.id, item.name) }} key={item.id} className='px-3 py-3 border-[1px] border-slate-200'>
-                                        <Text className='text-center text-lg'>{item.name} ({item.amount.toString().length <= 6 ? item.amount.toString().slice(0, -3) + "K" : item.amount.toString().slice(0, -6) + "M"})</Text>
+                                    <Pressable onPress={() => { setSelectedCategory(item.id, item.name) }} key={item.id} className='px-3 py-3 border-b-[1px] border-slate-400'>
+                                        <Text className='text-center text-lg font-bold'>{item.name.toUpperCase()} ({item.amount.toString().length <= 6 ? item.amount.toString().slice(0, -3) + "K" : item.amount.toString().slice(0, -6) + "M"})</Text>
                                     </Pressable>
                                 ))
                             ) : (

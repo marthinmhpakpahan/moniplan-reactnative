@@ -1,4 +1,5 @@
-import { getUserSession } from "@/utils/session";
+import { redirectToDashboard } from "@/utils/helper";
+import { getUserSession, removeUserSession } from "@/utils/session";
 import axios from "axios";
 
 const BASE_URL = "http://192.168.1.28:8080"
@@ -17,11 +18,9 @@ export const indexTransaction = async (_month: Number, _year: Number) => {
     });
     return response.data;
   } catch (error: any) {
-    if (error.response) {
-      console.error("Index Transaction failed:", error.response.data);
-      throw new Error(error.response.data.message || "Index Transaction failed");
-    }
-    throw error;
+    console.error("Index Transaction failed:", error.response.data);
+    removeUserSession()
+    redirectToDashboard()
   }
 };
 
