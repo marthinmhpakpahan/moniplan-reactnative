@@ -5,7 +5,7 @@ import {
   BottomSheetTextInput,
   BottomSheetView
 } from '@gorhom/bottom-sheet';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -16,10 +16,12 @@ import { Transactions } from '../models/Transactions';
 // SERVICES
 import { createCategory, indexCategory } from '../services/categories';
 import { indexTransaction } from '../services/transactions';
+import { getCurrentDate } from '@/utils/helper';
 
 export default function Dashboard() {
-  const currentDate = new Date();
-  console.log("Dasboard current date: ", currentDate);
+  const { shouldRefreshData } = useLocalSearchParams();
+
+  const currentDate = getCurrentDate()
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
   const monthLabel = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -36,7 +38,7 @@ export default function Dashboard() {
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
 
-  const [remainingBudget, setRemainingBudget] = useState<{ [key: string]: string }>({});
+  const [remainingBudget, setRemainingBudget] = useState<{ [key: string]: number }>({});
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const handlePresentModalPress = useCallback(() => {
@@ -77,11 +79,11 @@ export default function Dashboard() {
   }
 
   function showDetailCategoryInfo(category: Categories) {
-    console.log("showDetailCategoryInfo", remainingBudget["internet"])
     let category_name = category.name ? category.name : "";
     category.remaining_budget = 0;
-    if(category_name != "") {
-      category.remaining_budget = remainingBudget[category_name].amount
+    console.log("showDetailCategoryInfo", remainingBudget)
+    if (category_name != "") {
+      category["remaining_budget"] = remainingBudget[category_name]
     }
     setSelectedCategory(category)
     handlePresentDetailCategoryModalPress()
@@ -92,13 +94,14 @@ export default function Dashboard() {
       const response = await createCategory(
         categoryName, month, year, parseInt(totalBudget)
       );
-      setRefreshCategories(true)
+      setRefreshCategories(!refreshCategories)
       bottomSheetModalRef.current?.close();
     } catch (e) {
       console.error("Error adding document: ", e);
     }
     setCategoryName("")
     setTotalBudget("")
+    setRefreshCategories(!refreshCategories)
   }
 
   function handleAddTransaction() {
@@ -111,8 +114,8 @@ export default function Dashboard() {
         const response = await indexCategory(month, year);
         const data = response.data || [];
         setCategories(data);
-        
-        const budgetObj: { [key: string]: string } = {};
+
+        const budgetObj: { [key: string]: number } = {};
         for (let i = 0; i < data.length; i++) {
           budgetObj[data[i].name.toLowerCase()] = data[i].amount
         }
@@ -123,7 +126,7 @@ export default function Dashboard() {
     };
 
     loadCategories();
-  }, [month, year]);
+  }, [month, year, refreshCategories, shouldRefreshData]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -131,10 +134,15 @@ export default function Dashboard() {
         const response = await indexTransaction(month, year);
         const data = response.data || [];
         setTransactions(data);
+        console.log("fetchTransactions", data)
         let totalIncome = 0, totalExpense = 0;
         for (let i = 0; i < data.length; i++) {
           if (data[i].type.toLowerCase() == "expense") {
             totalExpense += data[i].amount
+            let category_name = data[i].category_name
+            remainingBudget[category_name] -= data[i].amount
+            setRemainingBudget(remainingBudget)
+            console.log("remainingBudget", remainingBudget)
           } else {
             totalIncome += data[i].amount
           }
@@ -147,72 +155,74 @@ export default function Dashboard() {
     };
 
     fetchTransactions();
-  }, [month, year]);
+  }, [month, year, shouldRefreshData]);
 
 
   return (
     <View className="flex-1 px-2">
-      <View className='mt-3 flex flex-row items-center justify-center'>
-        <Pressable onPress={decreaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-l-[3px]'>
-          <FontAwesome5 name="chevron-left" size={16} color="black" />
-        </Pressable>
-        <Text className='font-bold px-3'>{monthLabel[month - 1]} {year}</Text>
-        <Pressable onPress={increaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
-          <FontAwesome5 name="chevron-right" size={16} color="black" />
-        </Pressable>
-      </View>
-      <View className='flex flex-row items-center pt-3'>
-        <Text className="text-lg font-bold">Categories</Text>
-      </View>
-      <View className='flex flex-row flex-wrap'>
-        {categories?.length > 0 ? (
-          categories.map((item) => ( // Use map here
-            <Pressable onPress={() => showDetailCategoryInfo(item)} key={item.id} className='border border-black mr-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
-              <Text className='text-sm font-semibold'>{item.name.toUpperCase()}</Text>
-            </Pressable>
-          ))
-        ) : (
-          <></>
-        )}
-        <Pressable onPress={showFormAddCategory} className='flex justify-center items-center bg-white border border-black py-1 mx-1 my-1 px-3 border-b-[3px] border-r-[3px]'>
-          <FontAwesome5 name="plus" size={12} color="black" />
-        </Pressable>
-      </View>
-      <View className='flex flex-row items-center pt-3 justify-between pr-2'>
-        <View className='flex flex-row items-center'>
-          <Text className="text-lg font-bold">Transactions</Text>
-          <Pressable onPress={handleAddTransaction} className='border-2 border-black px-3 py-1 m-3 z-100'>
-            <Text><FontAwesome5 name="plus" size={12} color="black"></FontAwesome5></Text>
+      <View className="flex-1 px-2">
+        <View className='mt-3 flex flex-row items-center justify-center'>
+          <Pressable onPress={decreaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-l-[3px]'>
+            <FontAwesome5 name="chevron-left" size={16} color="black" />
+          </Pressable>
+          <Text className='font-bold px-3'>{monthLabel[month - 1]} {year}</Text>
+          <Pressable onPress={increaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
+            <FontAwesome5 name="chevron-right" size={16} color="black" />
           </Pressable>
         </View>
-        <View className='flex flex-row items-center'>
+        <View className='flex flex-row items-center pt-3'>
+          <Text className="text-lg font-bold">Categories</Text>
+        </View>
+        <View className='flex flex-row flex-wrap'>
+          {categories?.length > 0 ? (
+            categories.map((item) => ( // Use map here
+              <Pressable onPress={() => showDetailCategoryInfo(item)} key={item.id} className='border border-black mr-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
+                <Text className='text-sm font-semibold'>{item.name.toUpperCase()}</Text>
+              </Pressable>
+            ))
+          ) : (
+            <></>
+          )}
+          <Pressable onPress={showFormAddCategory} className='flex justify-center items-center bg-white border border-black py-1 mx-1 my-1 px-3 border-b-[3px] border-r-[3px]'>
+            <FontAwesome5 name="plus" size={12} color="black" />
+          </Pressable>
+        </View>
+        <View className='flex flex-row items-center pt-3 justify-between pr-2'>
           <View className='flex flex-row items-center'>
-            <MaterialCommunityIcons name="arrow-down" size={20} color="green" />
-            <Text className='text-green-800 font-bold'>Rp. {new Intl.NumberFormat().format(totalIncome)}</Text>
+            <Text className="text-lg font-bold">Transactions</Text>
+            <Pressable onPress={handleAddTransaction} className='border-2 border-black px-3 py-1 m-3 z-100'>
+              <Text><FontAwesome5 name="plus" size={12} color="black"></FontAwesome5></Text>
+            </Pressable>
           </View>
-          <View className='flex flex-row items-center ml-3'>
-            <MaterialCommunityIcons name="arrow-up" size={20} color="red" />
-            <Text className='text-red-500 font-bold'>Rp. {new Intl.NumberFormat().format(totalExpense)}</Text>
+          <View className='flex flex-row items-center'>
+            <View className='flex flex-row items-center'>
+              <MaterialCommunityIcons name="arrow-down" size={20} color="green" />
+              <Text className='text-green-800 font-bold'>Rp. {new Intl.NumberFormat().format(totalIncome)}</Text>
+            </View>
+            <View className='flex flex-row items-center ml-3'>
+              <MaterialCommunityIcons name="arrow-up" size={20} color="red" />
+              <Text className='text-red-500 font-bold'>Rp. {new Intl.NumberFormat().format(totalExpense)}</Text>
+            </View>
           </View>
         </View>
+        <View>
+          {transactions?.length > 0 ? (
+            transactions.map((item) => ( // Use map here
+              <Pressable key={item.id} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
+                <View className='flex flex-row justify-between items-center'>
+                  <Text className='text-2xl font-bold'>Rp. {item.amount}</Text>
+                  <Text className='text-xs font-semibold'>{item.transaction_date}</Text>
+                </View>
+                <Text className='text-md font-semibold mt-2'>{item.category_name.toUpperCase()}</Text>
+                <Text className='text-sm font-normal'>{item.remarks}</Text>
+              </Pressable>
+            ))
+          ) : (
+            <></>
+          )}
+        </View>
       </View>
-      <View>
-        {transactions?.length > 0 ? (
-          transactions.map((item) => ( // Use map here
-            <Pressable key={item.id} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
-              <View className='flex flex-row justify-between items-center'>
-                <Text className='text-2xl font-bold'>Rp. {item.amount}</Text>
-                <Text className='text-xs font-semibold'>{item.transaction_date}</Text>
-              </View>
-              <Text className='text-md font-semibold mt-2'>{item.category_name.toUpperCase()}</Text>
-              <Text className='text-sm font-normal'>{item.remarks}</Text>
-            </Pressable>
-          ))
-        ) : (
-          <></>
-        )}
-      </View>
-      <GestureHandlerRootView className='flex-1 z-3 bg-white'>
+      <GestureHandlerRootView className='flex-1 z-10 bg-white'>
         <BottomSheetModalProvider>
           <BottomSheetModal
             ref={bottomSheetModalRef}
@@ -309,6 +319,6 @@ export default function Dashboard() {
           </BottomSheetModal>
         </BottomSheetModalProvider>
       </GestureHandlerRootView>
-    </View>
+    </View >
   );
 }

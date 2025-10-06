@@ -7,9 +7,11 @@ import { Alert, Modal, Platform, Pressable, Text, TextInput, View } from "react-
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Categories } from './models/Categories';
 import { indexCategory } from './services/categories';
+import { getCurrentDate, getRandomInt } from '@/utils/helper';
+import { createTransaction } from './services/transactions';
 
 export default function CreateTransaction() {
-    const currentDate = new Date();
+    const currentDate = getCurrentDate()
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
     const [categoryID, setCategoryID] = useState("")
@@ -17,29 +19,27 @@ export default function CreateTransaction() {
     const [categories, setCategories] = useState<Categories[]>([]);
     const monthLabel = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
-    const [date, setDate] = useState(new Date());
+    const [date, setDate] = useState(currentDate);
+    console.log("Create Transaction current date: ", formatDate(currentDate));
     const [amount, setAmount] = useState(0);
     const [remarks, setRemarks] = useState("");
-
     const [modalVisible, setModalVisible] = useState(false);
-
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const onChangeDatePicker = (event: any, selectedDate?: Date) => {
-        const currentDate = selectedDate || date;
+        let _currentDate = selectedDate || date;
         setShowDatePicker(Platform.OS === 'ios'); // iOS keeps picker open
-        setDate(currentDate);
+        setDate(_currentDate);
     };
 
     function formatDate(value: Date) {
-        return value.getDay() + " " + monthLabel[value.getMonth()] + " " + value.getFullYear()
+        return value.getDate() + " " + monthLabel[value.getMonth()] + " " + value.getFullYear()
     }
 
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const response = await indexCategory(currentMonth, currentYear)
-                console.log("fetchCategories", response.data)
                 setCategories(response.data);
             } catch (err) {
                 console.error("Error fetching categories: ", err);
@@ -56,12 +56,13 @@ export default function CreateTransaction() {
         console.log("setSelectedCategory", key, value)
     };
 
-    const resetForm = () => {
-
-    }
-
     const redirectToDashboard = () => {
-        router.push("/(tabs)/dashboard")
+        router.push({
+            pathname: "/(tabs)/dashboard",
+            params: {
+                shouldRefreshData: getRandomInt(1, 100),
+            },
+        });
     }
 
     async function handleSaveButton() {
@@ -75,27 +76,17 @@ export default function CreateTransaction() {
             console.log("Save button triggered!")
             try {
                 const user = await getUserSession();
+                try {
+                    const response = await createTransaction(
+                        parseInt(categoryID), amount, "Expense", remarks
+                    );
 
-                Alert.alert(
-                    "Important Message",
-                    "You've successfully added new data! Do you want to go to dashboard or add new one?",
-                    [
-                        {
-                            text: "Go To Dashboard",
-                            onPress: () => {
-                                redirectToDashboard()
-                            },
-                            style: "cancel"
-                        },
-                        {
-                            text: "Add New One",
-                            onPress: () => {
-                                resetForm()
-                            }
-                        }
-                    ],
-                    { cancelable: false }
-                );
+                    if (!response.error) {
+                        redirectToDashboard()
+                    }
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                }
             } catch (e) {
                 Alert.alert("ERROR", "Error happened!")
             }
@@ -117,7 +108,7 @@ export default function CreateTransaction() {
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Amount</Text>
-                    <TextInput value={amount.toString() == "0" ? "" : amount.toString()} onChangeText={text => setAmount(parseInt(text))} className='col-start-1 grow col-span-4 border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
+                    <TextInput value={amount.toString() == "0" || amount.toString() == "" ? "0" : amount.toString()} onChangeText={text => setAmount(parseInt(text == "0" || text == "" ? "0" : text))} className='col-start-1 grow col-span-4 border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Category</Text>

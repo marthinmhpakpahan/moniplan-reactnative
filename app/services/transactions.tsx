@@ -25,11 +25,11 @@ export const indexTransaction = async (_month: Number, _year: Number) => {
   }
 };
 
-export const createCategory = async (_name: string, _month: Number, _year: Number, _amount: Number) => {
+export const createTransaction = async (_category_id: number, _amount: number, _type: string, _remarks: string) => {
   try {
     const user = await getUserSession()
-    const response = await axios.post(BASE_URL + "/api/v1/category/create", {
-      name: _name, month: _month, year: _year, amount: _amount
+    const response = await axios.post(BASE_URL + "/api/v1/transaction/create", {
+      category_id: _category_id, amount: _amount, type: _type, remarks: _remarks
     }, {
       headers: {
         "Authorization": "Bearer " + user.token

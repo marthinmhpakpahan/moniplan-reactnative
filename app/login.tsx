@@ -36,8 +36,9 @@ export default function Login() {
         setError('');
         try {
             const response = await login(username, password)
+            console.log("handleLogin", response)
             const user = response.user;
-            if (user.token) {
+            if (response.token) {
                 user.token = response.token;
                 saveUserSession(user)
                 redirectToDashboard()
