@@ -11,8 +11,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from './firebaseConfig';
 import { register } from './services/users';
 
 export default function Register() {

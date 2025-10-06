@@ -1,4 +1,4 @@
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
@@ -19,13 +19,12 @@ import { indexTransaction } from '../services/transactions';
 
 export default function Dashboard() {
   const currentDate = new Date();
+  console.log("Dasboard current date: ", currentDate);
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
   const monthLabel = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
-
-  console.log("Dashboard: " + currentDate + " - " + currentMonth + " - " + currentYear + " == " + month + " - " + year)
 
   const [categories, setCategories] = useState<Categories[]>([]);
   const [transactions, setTransactions] = useState<Transactions[]>([]);
@@ -34,6 +33,10 @@ export default function Dashboard() {
 
   const [categoryName, setCategoryName] = useState("");
   const [totalBudget, setTotalBudget] = useState("");
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [totalExpense, setTotalExpense] = useState(0);
+
+  const [remainingBudget, setRemainingBudget] = useState<{ [key: string]: string }>({});
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const handlePresentModalPress = useCallback(() => {
@@ -58,7 +61,6 @@ export default function Dashboard() {
     } else {
       setMonth(month + 1)
     }
-    console.log("increaseMonth", month+"-"+year)
   }
 
   function decreaseMonth() {
@@ -68,7 +70,6 @@ export default function Dashboard() {
     } else {
       setMonth(month - 1)
     }
-    console.log("decreaseMonth", month+"-"+year)
   }
 
   function showFormAddCategory() {
@@ -76,13 +77,18 @@ export default function Dashboard() {
   }
 
   function showDetailCategoryInfo(category: Categories) {
+    console.log("showDetailCategoryInfo", remainingBudget["internet"])
+    let category_name = category.name ? category.name : "";
+    category.remaining_budget = 0;
+    if(category_name != "") {
+      category.remaining_budget = remainingBudget[category_name].amount
+    }
     setSelectedCategory(category)
     handlePresentDetailCategoryModalPress()
   }
 
   async function handleAddCategory() {
     try {
-      console.log("handleAddCategory", totalBudget)
       const response = await createCategory(
         categoryName, month, year, parseInt(totalBudget)
       );
@@ -96,32 +102,52 @@ export default function Dashboard() {
   }
 
   function handleAddTransaction() {
-    console.log("handleAddTransaction clicked!")
     router.push("/create-transaction")
   }
 
   useEffect(() => {
     const loadCategories = async () => {
-      const response = await indexCategory("");
-      setCategories(response.data || []);
+      try {
+        const response = await indexCategory(month, year);
+        const data = response.data || [];
+        setCategories(data);
+        
+        const budgetObj: { [key: string]: string } = {};
+        for (let i = 0; i < data.length; i++) {
+          budgetObj[data[i].name.toLowerCase()] = data[i].amount
+        }
+        setRemainingBudget(budgetObj)
+      } catch (err) {
+        console.error("Error fetching categories: ", err);
+      }
     };
 
     loadCategories();
-  }, [refreshCategories]);
+  }, [month, year]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        console.log("fetchTransactions", month+"-"+year)
         const response = await indexTransaction(month, year);
-        setTransactions(response.data || []);
+        const data = response.data || [];
+        setTransactions(data);
+        let totalIncome = 0, totalExpense = 0;
+        for (let i = 0; i < data.length; i++) {
+          if (data[i].type.toLowerCase() == "expense") {
+            totalExpense += data[i].amount
+          } else {
+            totalIncome += data[i].amount
+          }
+        }
+        setTotalIncome(totalIncome)
+        setTotalExpense(totalExpense)
       } catch (err) {
         console.error("Error fetching transactions: ", err);
       }
     };
 
     fetchTransactions();
-  }, [month]);
+  }, [month, year]);
 
 
   return (
@@ -130,7 +156,7 @@ export default function Dashboard() {
         <Pressable onPress={decreaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-l-[3px]'>
           <FontAwesome5 name="chevron-left" size={16} color="black" />
         </Pressable>
-        <Text className='font-bold px-3'>{monthLabel[month-1]} {year}</Text>
+        <Text className='font-bold px-3'>{monthLabel[month - 1]} {year}</Text>
         <Pressable onPress={increaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
           <FontAwesome5 name="chevron-right" size={16} color="black" />
         </Pressable>
@@ -154,14 +180,20 @@ export default function Dashboard() {
       </View>
       <View className='flex flex-row items-center pt-3 justify-between pr-2'>
         <View className='flex flex-row items-center'>
-        <Text className="text-lg font-bold">Transactions</Text>
-        <Pressable onPress={handleAddTransaction} className='border-2 border-black px-3 py-1 m-3 z-100'>
-          <Text><FontAwesome5 name="plus" size={12} color="black"></FontAwesome5></Text>
-        </Pressable>
+          <Text className="text-lg font-bold">Transactions</Text>
+          <Pressable onPress={handleAddTransaction} className='border-2 border-black px-3 py-1 m-3 z-100'>
+            <Text><FontAwesome5 name="plus" size={12} color="black"></FontAwesome5></Text>
+          </Pressable>
         </View>
         <View className='flex flex-row items-center'>
-          <Text>Rp. 1000</Text>
-          <Text>Rp. 3000</Text>
+          <View className='flex flex-row items-center'>
+            <MaterialCommunityIcons name="arrow-down" size={20} color="green" />
+            <Text className='text-green-800 font-bold'>Rp. {new Intl.NumberFormat().format(totalIncome)}</Text>
+          </View>
+          <View className='flex flex-row items-center ml-3'>
+            <MaterialCommunityIcons name="arrow-up" size={20} color="red" />
+            <Text className='text-red-500 font-bold'>Rp. {new Intl.NumberFormat().format(totalExpense)}</Text>
+          </View>
         </View>
       </View>
       <View>
@@ -169,11 +201,11 @@ export default function Dashboard() {
           transactions.map((item) => ( // Use map here
             <Pressable key={item.id} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
               <View className='flex flex-row justify-between items-center'>
-              <Text className='text-lg font-semibold'>{item.category_name.toUpperCase()}</Text>
-              <Text className='text-xs font-semibold'>{item.transaction_date}</Text>
+                <Text className='text-2xl font-bold'>Rp. {item.amount}</Text>
+                <Text className='text-xs font-semibold'>{item.transaction_date}</Text>
               </View>
-              <Text className='text-xl font-bold'>Rp. {item.amount}</Text>
-              <Text className='text-sm font-normal mt-1'>{item.remarks}</Text>
+              <Text className='text-md font-semibold mt-2'>{item.category_name.toUpperCase()}</Text>
+              <Text className='text-sm font-normal'>{item.remarks}</Text>
             </Pressable>
           ))
         ) : (
@@ -258,17 +290,17 @@ export default function Dashboard() {
 
                     <View className='mt-4'>
                       <Text className='text-slate-600 py-1'>Name</Text>
-                      <Text className='font-bold text-3xl'>{selectedCategory?.name}</Text>
+                      <Text className='font-bold text-3xl'>{selectedCategory?.name.toUpperCase()}</Text>
                     </View>
 
                     <View className='mt-2'>
                       <Text className='text-slate-600 py-1'>Total Budget</Text>
-                      <Text className='font-bold text-3xl'>Rp. {selectedCategory?.amount}</Text>
+                      <Text className='font-bold text-3xl'>Rp. {new Intl.NumberFormat().format(selectedCategory ? selectedCategory.amount : 0)}</Text>
                     </View>
 
                     <View className='mt-2'>
                       <Text className='text-slate-600 py-1'>Remaining Budget</Text>
-                      <Text className='font-bold text-3xl'>Rp. -</Text>
+                      <Text className='font-bold text-3xl'>Rp. {new Intl.NumberFormat().format(selectedCategory ? selectedCategory.remaining_budget : 0)}</Text>
                     </View>
                   </View>
                 </ScrollView>

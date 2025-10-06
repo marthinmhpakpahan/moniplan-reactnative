@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { collection, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -36,12 +35,13 @@ export default function Login() {
         setLoading(true);
         setError('');
         try {
-            console.log("login screen", username + " = " + password)
             const response = await login(username, password)
             const user = response.user;
-            user.token = response.token;
-            saveUserSession(user)
-            redirectToDashboard()
+            if (user.token) {
+                user.token = response.token;
+                saveUserSession(user)
+                redirectToDashboard()
+            }
         } catch (err) {
             setError('Terjadi kesalahan saat login.');
             console.error('Login error:', err);

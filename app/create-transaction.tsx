@@ -9,7 +9,9 @@ import { Categories } from './models/Categories';
 import { indexCategory } from './services/categories';
 
 export default function CreateTransaction() {
-
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear();
     const [categoryID, setCategoryID] = useState("")
     const [categoryName, setCategoryName] = useState("")
     const [categories, setCategories] = useState<Categories[]>([]);
@@ -29,20 +31,20 @@ export default function CreateTransaction() {
         setDate(currentDate);
     };
 
-    function formatDate(value : Date) {
+    function formatDate(value: Date) {
         return value.getDay() + " " + monthLabel[value.getMonth()] + " " + value.getFullYear()
     }
 
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-              const response = await indexCategory("")
-              console.log("fetchCategories", response.data)
-              setCategories(response.data);
+                const response = await indexCategory(currentMonth, currentYear)
+                console.log("fetchCategories", response.data)
+                setCategories(response.data);
             } catch (err) {
-              console.error("Error fetching categories: ", err);
+                console.error("Error fetching categories: ", err);
             }
-          };
+        };
 
         fetchCategories();
     }, []);
@@ -55,7 +57,7 @@ export default function CreateTransaction() {
     };
 
     const resetForm = () => {
-        
+
     }
 
     const redirectToDashboard = () => {
@@ -64,39 +66,39 @@ export default function CreateTransaction() {
 
     async function handleSaveButton() {
         let is_valid = true;
-        if(amount === 0 || categoryID === "") {
+        if (amount === 0 || categoryID === "") {
             is_valid = false;
             Alert.alert("Warning!", "Please fill the required fields!")
         }
 
-        if(is_valid) {
+        if (is_valid) {
             console.log("Save button triggered!")
             try {
                 const user = await getUserSession();
-                
+
                 Alert.alert(
                     "Important Message",
                     "You've successfully added new data! Do you want to go to dashboard or add new one?",
                     [
-                      {
-                        text: "Go To Dashboard",
-                        onPress: () => {
-                            redirectToDashboard()
+                        {
+                            text: "Go To Dashboard",
+                            onPress: () => {
+                                redirectToDashboard()
+                            },
+                            style: "cancel"
                         },
-                        style: "cancel"
-                      },
-                      {
-                        text: "Add New One",
-                        onPress: () => {
-                          resetForm()
+                        {
+                            text: "Add New One",
+                            onPress: () => {
+                                resetForm()
+                            }
                         }
-                      }
                     ],
                     { cancelable: false }
-                  );
-              } catch (e) {
+                );
+            } catch (e) {
                 Alert.alert("ERROR", "Error happened!")
-              }
+            }
         }
     }
 
@@ -111,7 +113,7 @@ export default function CreateTransaction() {
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Date</Text>
-                    <TextInput value={formatDate(date)} onPress={() => {setShowDatePicker(true)}} className='col-start-1 grow col-span-4 border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
+                    <TextInput value={formatDate(date)} onPress={() => { setShowDatePicker(true) }} className='col-start-1 grow col-span-4 border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Amount</Text>

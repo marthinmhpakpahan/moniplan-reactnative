@@ -3,4 +3,5 @@ export interface Categories {
     user_id: string;
     name: string;
     amount: number;
+    remaining_budget: number;
 }

@@ -40,7 +40,7 @@ export default function TabLayout() {
         ),
         headerRight: () => (
           <Pressable onPress={handleLogout} style={{ marginRight: 12 }}>
-            <MaterialCommunityIcons name="logout" size={32} color="black" />
+            <MaterialCommunityIcons name="logout" size={26} color="black" />
           </Pressable>
         ),
       })}
