@@ -57,6 +57,7 @@ export default function Register() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
+        className='bg-white'
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
             flexGrow: 1,
@@ -64,13 +65,13 @@ export default function Register() {
             paddingVertical: 40,
           }}
         >
-          <View className="px-6">
-            <Text className="text-3xl font-bold text-center mb-6">Register Page!</Text>
+          <View className="px-6 bg-white">
+            <Text className="text-3xl font-bold text-center mb-6">Register Your Account!</Text>
 
             <View className="mb-4">
               <Text className="mb-1">Full Name</Text>
               <TextInput
-                className="border border-gray-500 py-2 my-1 px-3"
+                className="border border-black py-2 my-1 px-3 rounded-lg"
                 value={full_name}
                 onChangeText={setFullName}
               />
@@ -79,7 +80,7 @@ export default function Register() {
             <View className="mb-4">
               <Text className="mb-1">Email</Text>
               <TextInput
-                className="border border-black py-2 my-1 px-3"
+                className="border border-black py-2 my-1 px-3 rounded-lg"
                 value={email}
                 onChangeText={setEmail}
               />
@@ -88,20 +89,20 @@ export default function Register() {
             <View className="mb-6">
               <Text className="mb-1">Password</Text>
               <TextInput
-                className="border border-black py-2 my-1 px-3"
+                className="border border-black py-2 my-1 px-3 rounded-lg"
                 value={password}
                 secureTextEntry
                 onChangeText={setPassword}
               />
             </View>
 
-            <Pressable onPress={handleRegister} className="flex justify-center items-center bg-white border border-black py-2 my-1 px-3 border-b-[3px] border-r-[3px]">
-              <Text className="text-black font-aestera text-center">REGISTER</Text>
+            <Pressable onPress={handleRegister} className="flex justify-center items-center bg-white border border-black py-2 my-1 px-3 border-b-[3px] border-r-[3px] rounded-lg">
+              <Text className="text-black font-bold text-center">REGISTER</Text>
             </Pressable>
 
             <Pressable onPress={redirectToLoginPage}>
-              <Text className="text-blue-600 font-semibold text-center">
-                Sudah punya akun? Login!
+              <Text className="text-black font-semibold text-center">
+                Already have account? Login here!
               </Text>
             </Pressable>
           </View>

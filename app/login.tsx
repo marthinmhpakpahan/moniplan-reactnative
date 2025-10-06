@@ -60,6 +60,7 @@ export default function Login() {
         >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <ScrollView
+                    className='bg-white'
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{
                         flexGrow: 1,
@@ -67,17 +68,17 @@ export default function Login() {
                         paddingVertical: 40,
                     }}
                 >
-                    <View className="px-6">
-                        <Text className="text-3xl font-bold text-center mb-6">Login</Text>
+                    <View className="px-6 bg-white">
+                        <Text className="text-4xl font-bold text-center mb-6">Login</Text>
 
                         {error ? (
                             <Text className="text-red-600 text-center mb-4">{error}</Text>
                         ) : null}
 
                         <View className="mb-4">
-                            <Text className="mb-1">Email</Text>
+                            <Text className="mb-1 text-black">Email</Text>
                             <TextInput
-                                className="border border-slate-400 rounded-lg px-3 py-2"
+                                className="border border-black rounded-lg px-3 py-2 bg-white"
                                 value={username}
                                 onChangeText={setUsername}
                                 keyboardType="email-address"
@@ -86,9 +87,9 @@ export default function Login() {
                         </View>
 
                         <View className="mb-6">
-                            <Text className="mb-1">Password</Text>
+                            <Text className="mb-1 text-black">Password</Text>
                             <TextInput
-                                className="border border-slate-400 rounded-lg px-3 py-2"
+                                className="border border-black rounded-lg px-3 py-2 bg-white"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
@@ -97,19 +98,19 @@ export default function Login() {
 
                         <Pressable
                             onPress={handleLogin}
-                            className="bg-blue-600 py-3 rounded-lg mb-3 disabled:opacity-50"
+                            className="flex justify-center items-center bg-white border border-black py-2 my-1 px-3 border-b-[3px] border-r-[3px] rounded-lg mb-3 disabled:opacity-50"
                             disabled={loading}
                         >
                             {loading ? (
-                                <ActivityIndicator color="#fff" />
+                                <ActivityIndicator color="#000" />
                             ) : (
-                                <Text className="text-white font-semibold text-center">Login</Text>
+                                <Text className="text-black font-bold text-center">Login</Text>
                             )}
                         </Pressable>
 
                         <Pressable onPress={redirectToRegisterPage}>
-                            <Text className="text-blue-600 font-semibold text-center">
-                                Belum punya akun? Register!
+                            <Text className="text-black font-semibold text-center">
+                                Don't have account? Register here!
                             </Text>
                         </Pressable>
                     </View>

@@ -31,6 +31,10 @@ export const redirectToRegisterPage = () => {
   router.push('/register');
 };
 
+export const redirectToLoginPage = () => {
+  router.push("/login")
+}
+
 export const isEmptyPlainObject = (obj: any) => {
   return (
     typeof obj === 'object' &&

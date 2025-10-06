@@ -5,15 +5,6 @@ import { removeUserSession } from '../../utils/session';
 
 export default function TabLayout() {
 
-  const redirectToLoginPage = () => {
-    router.push("/login")
-  }
-
-  function handleLogout() {
-    removeUserSession()
-    redirectToLoginPage()
-  }
-
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -38,11 +29,6 @@ export default function TabLayout() {
             <Fontisto name="money-symbol" size={24} color="black" />
             <Text className='font-bold ml-1 text-4xl'>MoniPlan</Text>
           </View>
-        ),
-        headerRight: () => (
-          <Pressable onPress={handleLogout} style={{ marginRight: 12 }}>
-            <MaterialCommunityIcons name="logout" size={26} color="black" />
-          </Pressable>
         ),
       })}
     >

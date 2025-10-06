@@ -171,11 +171,11 @@ export default function Dashboard() {
         <SafeAreaView className="flex-1 bg-white">
           <View className="flex-1 px-2">
             <View className='mt-3 flex flex-row items-center justify-center'>
-              <Pressable onPress={decreaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-l-[3px]'>
+              <Pressable onPress={decreaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-l-[3px] rounded-lg'>
                 <FontAwesome5 name="chevron-left" size={16} color="black" />
               </Pressable>
               <Text className='font-bold px-3'>{monthLabel[month - 1]} {year}</Text>
-              <Pressable onPress={increaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
+              <Pressable onPress={increaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px] rounded-lg'>
                 <FontAwesome5 name="chevron-right" size={16} color="black" />
               </Pressable>
             </View>
@@ -185,21 +185,21 @@ export default function Dashboard() {
             <View className='flex flex-row flex-wrap'>
               {categories?.length > 0 ? (
                 categories.map((item) => ( // Use map here
-                  <Pressable onPress={() => showDetailCategoryInfo(item)} key={item.id} className='border border-black mr-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
+                  <Pressable onPress={() => showDetailCategoryInfo(item)} key={item.id} className='border border-black mr-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px] rounded-lg'>
                     <Text className='text-sm font-semibold'>{item.name.replaceAll("_", " ").toUpperCase()}</Text>
                   </Pressable>
                 ))
               ) : (
                 <></>
               )}
-              <Pressable onPress={showFormAddCategory} className='flex justify-center items-center bg-white border border-black py-1 mx-1 my-1 px-3 border-b-[3px] border-r-[3px]'>
+              <Pressable onPress={showFormAddCategory} className='flex justify-center items-center bg-white border border-black py-1 mx-1 my-1 px-3 border-b-[3px] border-r-[3px] rounded-lg'>
                 <FontAwesome5 name="plus" size={12} color="black" />
               </Pressable>
             </View>
             <View className='flex flex-row items-center pt-3 justify-between pr-2'>
               <View className='flex flex-row items-center'>
                 <Text className="text-lg font-bold">Transactions</Text>
-                <Pressable onPress={handleAddTransaction} className='border-2 border-black px-3 py-1 m-3 z-100'>
+                <Pressable onPress={handleAddTransaction} className='border-2 border-black px-3 py-1 m-3 z-100 rounded-md'>
                   <Text><FontAwesome5 name="plus" size={12} color="black"></FontAwesome5></Text>
                 </Pressable>
               </View>
@@ -217,8 +217,8 @@ export default function Dashboard() {
             <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
               {transactions?.length > 0 ? (
                 transactions.map((item) => (
-                  <Pressable key={item.id} className='flex flex-row justify-between border border-black mx-1 my-1 px-3 py-2 border-b-[3px] border-r-[3px]'>
-                    <View className='flex flex-col border-[1px] items-center py-1 px-2'>
+                  <Pressable key={item.id} className='flex flex-row justify-between border border-black mx-1 my-1 px-3 py-2 border-b-[3px] border-r-[3px] rounded-lg'>
+                    <View className='flex flex-col border-[1px] items-center py-1 px-2 rounded-lg'>
                       <View className='flex flex-row items-center justify-between '>
                         <Fontisto name="date" size={20} color="black" />
                         <Text className='text-3xl ml-2 font-bold'>{getDetailDate(item.transaction_date || "")[1]}</Text>
@@ -276,28 +276,25 @@ export default function Dashboard() {
                   </Text>
 
                   <View className='mt-4'>
-                    <Text className='text-slate-800 py-1'>Category Name</Text>
+                    <Text className='text-slate-800 py-1 font-semibold'>Category Name</Text>
                     <BottomSheetTextInput
                       value={categoryName}
                       onChangeText={setCategoryName}
-                      className='border border-slate-500'
+                      className='border border-black rounded-lg'
                     />
                   </View>
 
                   <View className='mt-2'>
-                    <Text className='text-slate-800 py-1'>Total Budget (Rp)</Text>
+                    <Text className='text-slate-800 py-1 font-semibold'>Total Budget (Rp)</Text>
                     <BottomSheetTextInput
                       value={totalBudget}
                       onChangeText={setTotalBudget}
-                      className='border border-slate-500'
+                      className='border border-black rounded-lg'
                     />
                   </View>
 
                   <View className='flex flex-row justify-end mt-4'>
-                    <Pressable
-                      onPress={handleAddCategory}
-                      className='border-2 border-black px-5 py-1'
-                    >
+                    <Pressable onPress={handleAddCategory} className='border-2 border-black px-8 py-2 rounded-lg'>
                       <Text className='text-black font-bold'>Save</Text>
                     </Pressable>
                   </View>
