@@ -1,8 +1,6 @@
-import { redirectToDashboard } from "@/utils/helper";
+import { BASE_URL, redirectToDashboard } from "@/utils/helper";
 import { getUserSession, removeUserSession } from "@/utils/session";
 import axios from "axios";
-
-const BASE_URL = "http://192.168.1.28:8080"
 
 type WhereFilterOp =
   "<" | "<=" | "==" | "!=" | ">=" | ">" |

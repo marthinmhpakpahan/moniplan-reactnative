@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 
+export const BASE_URL = "https://api.moniplan.halomoan.id"
 const monthLabel = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 export const getCurrentDate = () => {

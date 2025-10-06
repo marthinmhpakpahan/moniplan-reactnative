@@ -1,6 +1,5 @@
+import { BASE_URL } from "@/utils/helper";
 import axios from "axios";
-
-const BASE_URL = "http://192.168.1.28:8080"
 
 export const login = async (_email: string, _password: string) => {
     try {
