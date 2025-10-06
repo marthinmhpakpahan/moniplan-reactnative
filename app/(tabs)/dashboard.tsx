@@ -1,5 +1,6 @@
 import { FontAwesome5, Fontisto, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import {
+  BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetModalProvider,
   BottomSheetTextInput,
@@ -16,7 +17,7 @@ import { Transactions } from '../models/Transactions';
 // SERVICES
 import { createCategory, indexCategory } from '../services/categories';
 import { indexTransaction } from '../services/transactions';
-import { getCurrentDate, getDetailDate, getRandomInt } from '@/utils/helper';
+import { getCurrentDate, getDetailDate, getRandomInt, isEmptyPlainObject } from '@/utils/helper';
 
 export default function Dashboard() {
   const { shouldRefreshData } = useLocalSearchParams();
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transactions[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Categories>();
   const [refreshCategories, setRefreshCategories] = useState<boolean>(false);
+  const [categoriesLoaded, setCategoriesLoaded] = useState<boolean>(false);
   const [refreshTransactions, setRefreshTransactions] = useState<boolean>(false);
 
   const [categoryName, setCategoryName] = useState("");
@@ -122,10 +124,8 @@ export default function Dashboard() {
           console.log(i, data[i].amount)
           budgetObj[data[i].name.toLowerCase()] = data[i].amount
         }
-        if(remainingBudget.length == 0) {
-          setRemainingBudget(budgetObj)
-        }
-        setRefreshTransactions(!refreshTransactions)
+        setRemainingBudget(budgetObj)
+        setCategoriesLoaded(!categoriesLoaded)
       } catch (err) {
         console.error("Error fetching categories: ", err);
       }
@@ -162,7 +162,7 @@ export default function Dashboard() {
     };
 
     fetchTransactions();
-  }, [month, shouldRefreshData]);
+  }, [categoriesLoaded]);
 
 
   return (
@@ -186,7 +186,7 @@ export default function Dashboard() {
               {categories?.length > 0 ? (
                 categories.map((item) => ( // Use map here
                   <Pressable onPress={() => showDetailCategoryInfo(item)} key={item.id} className='border border-black mr-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
-                    <Text className='text-sm font-semibold'>{item.name.toUpperCase()}</Text>
+                    <Text className='text-sm font-semibold'>{item.name.replaceAll("_", " ").toUpperCase()}</Text>
                   </Pressable>
                 ))
               ) : (
@@ -228,11 +228,12 @@ export default function Dashboard() {
                         <Text className='text-md ml-2 font-bold'>{getDetailDate(item.transaction_date || "")[4]}</Text>
                       </View>
                     </View>
-                    <View className='flex flex-col items-center justify-center'>
-                      <Text className='text-xl font-semibold'>{item.category_name.toUpperCase()}</Text>
-                      <Text className='text-sm font-normal'>{item.remarks}</Text>
+                    <View className='flex flex-col flex-1 px-3 items-center justify-center'>
+                      <Text className='text-xl font-semibold'>{item.category_name.replaceAll("_", " ").toUpperCase()}</Text>
+                      <Text className='text-sm font-normal flex-wrap' numberOfLines={2}>{item.remarks}</Text>
                     </View>
                     <View className='flex flex-wrap flex-col items-center justify-center'>
+                      <MaterialCommunityIcons name={`${item.type.toLowerCase() == 'expense' ? 'arrow-up' : 'arrow-down'}`} size={20} color={`${item.type.toLowerCase() == 'expense' ? 'red' : 'green'}`} />
                       <Text className={`${item.type.toLowerCase() == 'expense' ? 'text-red-600' : 'text-green-800'} text-md font-bold`}>Rp.</Text>
                       <Text className={`${item.type.toLowerCase() == 'expense' ? 'text-red-600' : 'text-green-800'} text-2xl font-bold`}>{new Intl.NumberFormat().format(item.amount / 1000)}K</Text>
                     </View>
@@ -249,7 +250,15 @@ export default function Dashboard() {
           onChange={handleSheetChanges}
           keyboardBehavior="interactive"
           keyboardBlurBehavior="restore"
-          enablePanDownToClose={true} 
+          enablePanDownToClose={true}
+          backdropComponent={(props) => (
+            <BottomSheetBackdrop
+              {...props}
+              appearsOnIndex={0}
+              disappearsOnIndex={-1}
+              pressBehavior="close" // 👈 this makes outside tap close the modal
+            />
+          )}
         >
           <BottomSheetView style={{ flex: 1 }}>
             <KeyboardAvoidingView
@@ -302,7 +311,15 @@ export default function Dashboard() {
           onChange={handleSheetDetailCategoryChanges}
           keyboardBehavior="interactive"
           keyboardBlurBehavior="restore"
-          enablePanDownToClose={true} 
+          enablePanDownToClose={true}
+          backdropComponent={(props) => (
+            <BottomSheetBackdrop
+              {...props}
+              appearsOnIndex={0}
+              disappearsOnIndex={-1}
+              pressBehavior="close" // 👈 this makes outside tap close the modal
+            />
+          )}
         >
           <BottomSheetView style={{ flex: 1 }}>
             <KeyboardAvoidingView

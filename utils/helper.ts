@@ -29,3 +29,12 @@ export const redirectToDashboard = () => {
 export const redirectToRegisterPage = () => {
   router.push('/register');
 };
+
+export const isEmptyPlainObject = (obj: any) => {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    obj.constructor === Object &&
+    Object.keys(obj).length === 0
+  );
+}

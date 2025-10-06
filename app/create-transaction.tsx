@@ -107,11 +107,11 @@ export default function CreateTransaction() {
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Category</Text>
-                    <TextInput showSoftInputOnFocus={false} value={categoryName.toUpperCase()} onPress={() => setModalVisible(true)} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
+                    <TextInput showSoftInputOnFocus={false} caretHidden={true} value={categoryName.toUpperCase()} onPress={() => setModalVisible(true)} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Note</Text>
-                    <TextInput multiline numberOfLines={5} textAlignVertical="top" value={remarks} onChangeText={text => setRemarks(text)} className='col-start-1 grow col-span-4 font-bold border-2 border-slate-400 w-max h-[100px]'></TextInput>
+                    <TextInput multiline numberOfLines={5} textAlignVertical="top" value={remarks} onChangeText={text => setRemarks(text)} className='col-start-1 flex-1 text-wrap col-span-4 font-bold border-[1px] border-slate-400 h-[100px]'></TextInput>
                 </View>
                 <View className='flex flex-row mt-6 px-3 justify-end'>
                     <Pressable className='flex flex-row items-center border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
