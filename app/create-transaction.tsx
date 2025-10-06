@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Categories } from './models/Categories';
+import { Categories } from './models/categories';
 import { indexCategory } from './services/categories';
 import { formatDate, getCurrentDate, getRandomInt } from '@/utils/helper';
 import { createTransaction } from './services/transactions';

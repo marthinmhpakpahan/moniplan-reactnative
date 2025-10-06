@@ -1,6 +1,6 @@
 import { getUserSession, removeUserSession } from '@/utils/session';
 import { View, Text, Pressable } from 'react-native';
-import { Users } from '../models/Users';
+import { Users } from '../models/users';
 import { useEffect, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { redirectToLoginPage } from '@/utils/helper';

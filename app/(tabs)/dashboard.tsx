@@ -11,8 +11,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { Categories } from '../models/Categories';
-import { Transactions } from '../models/Transactions';
+import { Categories } from '../models/categories';
+import { Transactions } from '../models/transactions';
 
 // SERVICES
 import { createCategory, indexCategory } from '../services/categories';
