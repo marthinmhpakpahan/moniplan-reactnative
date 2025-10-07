@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Keyboard,
@@ -78,7 +78,7 @@ export default function Login() {
                         <View className="mb-4">
                             <Text className="mb-1 text-black">Email</Text>
                             <TextInput
-                                className="border border-black rounded-lg px-3 py-2 bg-white"
+                                className="border border-black rounded-lg px-3 py-2 bg-white text-black"
                                 value={username}
                                 onChangeText={setUsername}
                                 keyboardType="email-address"
@@ -89,7 +89,7 @@ export default function Login() {
                         <View className="mb-6">
                             <Text className="mb-1 text-black">Password</Text>
                             <TextInput
-                                className="border border-black rounded-lg px-3 py-2 bg-white"
+                                className="border border-black rounded-lg px-3 py-2 bg-white text-black"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry

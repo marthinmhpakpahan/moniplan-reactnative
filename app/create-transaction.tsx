@@ -2,7 +2,7 @@ import { getUserSession } from '@/utils/session';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Categories } from './models/categories';
@@ -99,11 +99,11 @@ export default function CreateTransaction() {
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Date</Text>
-                    <TextInput showSoftInputOnFocus={false} value={formatDate(date)} onPress={() => { setShowDatePicker(true) }} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
+                    <TextInput showSoftInputOnFocus={false} value={formatDate(date)} onPress={() => { setShowDatePicker(true) }} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4 text-black'></TextInput>
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Amount</Text>
-                    <TextInput value={amount.toString() == "0" || amount.toString() == "" ? "0" : amount.toString()} onChangeText={text => setAmount(parseInt(text == "0" || text == "" ? "0" : text))} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
+                    <TextInput value={amount.toString() == "0" || amount.toString() == "" ? "0" : amount.toString()} onChangeText={text => setAmount(parseInt(text == "0" || text == "" ? "0" : text))} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4 text-black'></TextInput>
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Category</Text>
@@ -111,7 +111,7 @@ export default function CreateTransaction() {
                 </View>
                 <View className='flex flex-row items-end mt-4 px-3 '>
                     <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Note</Text>
-                    <TextInput multiline numberOfLines={5} textAlignVertical="top" value={remarks} onChangeText={text => setRemarks(text)} className='col-start-1 flex-1 text-wrap col-span-4 font-bold border-[1px] border-slate-400 h-[100px]'></TextInput>
+                    <TextInput multiline numberOfLines={5} textAlignVertical="top" value={remarks} onChangeText={text => setRemarks(text)} className='col-start-1 flex-1 text-wrap col-span-4 font-bold border-[1px] border-slate-400 h-[100px] text-black'></TextInput>
                 </View>
                 <View className='flex flex-row mt-6 px-3 justify-end'>
                     <Pressable className='flex flex-row items-center border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>

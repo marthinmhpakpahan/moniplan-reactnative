@@ -1,12 +1,12 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-native",
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "lib": ["es2021", "dom"]
   },
   "include": [
     "**/*.ts",

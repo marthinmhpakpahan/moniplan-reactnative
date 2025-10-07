@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { use, useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import {
   Text,
   View,
@@ -71,7 +71,7 @@ export default function Register() {
             <View className="mb-4">
               <Text className="mb-1">Full Name</Text>
               <TextInput
-                className="border border-black py-2 my-1 px-3 rounded-lg"
+                className="border border-black py-2 my-1 px-3 rounded-lg text-black"
                 value={full_name}
                 onChangeText={setFullName}
               />
@@ -80,7 +80,7 @@ export default function Register() {
             <View className="mb-4">
               <Text className="mb-1">Email</Text>
               <TextInput
-                className="border border-black py-2 my-1 px-3 rounded-lg"
+                className="border border-black py-2 my-1 px-3 rounded-lg text-black"
                 value={email}
                 onChangeText={setEmail}
               />
@@ -89,7 +89,7 @@ export default function Register() {
             <View className="mb-6">
               <Text className="mb-1">Password</Text>
               <TextInput
-                className="border border-black py-2 my-1 px-3 rounded-lg"
+                className="border border-black py-2 my-1 px-3 rounded-lg text-black"
                 value={password}
                 secureTextEntry
                 onChangeText={setPassword}

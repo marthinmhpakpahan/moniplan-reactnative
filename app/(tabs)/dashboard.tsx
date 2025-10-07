@@ -230,7 +230,7 @@ export default function Dashboard() {
                     </View>
                     <View className='flex flex-col flex-1 px-3 items-center justify-center'>
                       <Text className='text-xl font-semibold'>{item.category_name.replaceAll("_", " ").toUpperCase()}</Text>
-                      <Text className='text-sm font-normal flex-wrap' numberOfLines={2}>{item.remarks}</Text>
+                      <Text className='text-sm font-normal flex-wrap text-center' numberOfLines={2}>{item.remarks}</Text>
                     </View>
                     <View className='flex flex-wrap flex-col items-center justify-center'>
                       <MaterialCommunityIcons name={`${item.type.toLowerCase() == 'expense' ? 'arrow-up' : 'arrow-down'}`} size={20} color={`${item.type.toLowerCase() == 'expense' ? 'red' : 'green'}`} />
@@ -251,7 +251,7 @@ export default function Dashboard() {
           keyboardBehavior="interactive"
           keyboardBlurBehavior="restore"
           enablePanDownToClose={true}
-          backdropComponent={(props) => (
+          backdropComponent={(props: any) => (
             <BottomSheetBackdrop
               {...props}
               appearsOnIndex={0}
@@ -280,7 +280,7 @@ export default function Dashboard() {
                     <BottomSheetTextInput
                       value={categoryName}
                       onChangeText={setCategoryName}
-                      className='border border-black rounded-lg'
+                      className='border border-black rounded-lg text-black'
                     />
                   </View>
 
@@ -289,7 +289,7 @@ export default function Dashboard() {
                     <BottomSheetTextInput
                       value={totalBudget}
                       onChangeText={setTotalBudget}
-                      className='border border-black rounded-lg'
+                      className='border border-black rounded-lg text-black'
                     />
                   </View>
 
@@ -309,7 +309,7 @@ export default function Dashboard() {
           keyboardBehavior="interactive"
           keyboardBlurBehavior="restore"
           enablePanDownToClose={true}
-          backdropComponent={(props) => (
+          backdropComponent={(props: any) => (
             <BottomSheetBackdrop
               {...props}
               appearsOnIndex={0}

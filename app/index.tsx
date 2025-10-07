@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from "react-native";
 import { getUserSession } from '../utils/session';
 import { Fontisto } from '@expo/vector-icons';
@@ -41,7 +41,7 @@ export default function Index() {
     }, []);
 
     return (
-        <View className='flex-1 justify-center items-center'>
+        <View className='flex-1 justify-center items-center bg-white'>
             <View className='flex flex-row items-center mt-8 border-b-2'>
                 <Fontisto name="money-symbol" size={40} color="black" />
                 <Text className='font-bold ml-1 text-6xl'>MoniPlan</Text>
