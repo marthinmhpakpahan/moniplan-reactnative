@@ -1,4 +1,4 @@
-import { FontAwesome5, Fontisto, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5, FontAwesome6, Fontisto, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -11,17 +11,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { Categories } from '../models/categories';
+import { Categories, getDetailCategory } from '../models/categories';
 import { Transactions } from '../models/transactions';
 
 // SERVICES
 import { createCategory, indexCategory } from '../services/categories';
-import { indexTransaction } from '../services/transactions';
-import { getCurrentDate, getDetailDate, getRandomInt, isEmptyPlainObject } from '@/utils/helper';
+import { deleteTransaction, indexTransaction } from '../services/transactions';
+import { getCurrentDate, getDetailDate, getRandomInt, isEmptyPlainObject, showLongToast, showShortToast } from '@/utils/helper';
 
 export default function Dashboard() {
   const { shouldRefreshData } = useLocalSearchParams();
-  console.log("shouldRefreshData", shouldRefreshData)
 
   const currentDate = getCurrentDate()
   const currentMonth = currentDate.getMonth() + 1;
@@ -36,20 +35,20 @@ export default function Dashboard() {
   const [refreshCategories, setRefreshCategories] = useState<boolean>(false);
   const [categoriesLoaded, setCategoriesLoaded] = useState<boolean>(false);
   const [refreshTransactions, setRefreshTransactions] = useState<boolean>(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transactions>();
 
   const [categoryName, setCategoryName] = useState("");
   const [totalBudget, setTotalBudget] = useState("");
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
-
-  const [remainingBudget, setRemainingBudget] = useState<{ [key: string]: number }>({});
+  const [totalTransaction, setTotalTransaction] = useState(0);
+  const [totalCategory, setTotalCategory] = useState(0);
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
   const handleSheetChanges = useCallback((index: number) => {
-    console.log('handleSheetChanges', index);
   }, []);
 
   const detailCategorySheetModalRef = useRef<BottomSheetModal>(null);
@@ -57,8 +56,27 @@ export default function Dashboard() {
     detailCategorySheetModalRef.current?.present();
   }, []);
   const handleSheetDetailCategoryChanges = useCallback((index: number) => {
-    console.log('handleSheetDetailCategoryChanges', index);
   }, []);
+
+  const deleteTransactionSheetModalRef = useRef<BottomSheetModal>(null);
+  const handlePresentDeleteTransactionModalPress = useCallback(() => {
+    deleteTransactionSheetModalRef.current?.present();
+  }, []);
+  const handleSheetDeleteTransactionChanges = useCallback((index: number) => {
+  }, []);
+
+  const handleDismissPress = (bottomSheetModalRef : any) => {
+    bottomSheetModalRef.current?.close();
+  };
+
+  const handleDeleteTransaction = async (transaction_id : string) => {
+    const response = await deleteTransaction(transaction_id);
+    if(!response.error){
+      setRefreshTransactions(!refreshTransactions)
+      handleDismissPress(deleteTransactionSheetModalRef)
+      showShortToast("Transaction deleted successfully!")
+    }
+  };
 
   function increaseMonth() {
     if (month == 12) {
@@ -83,14 +101,14 @@ export default function Dashboard() {
   }
 
   function showDetailCategoryInfo(category: Categories) {
-    let category_name = category.name ? category.name : "";
-    category.remaining_budget = 0;
-    console.log("showDetailCategoryInfo", remainingBudget)
-    if (category_name != "") {
-      category["remaining_budget"] = remainingBudget[category_name]
-    }
-    setSelectedCategory(category)
+    let category_details = getDetailCategory(category, transactions);
+    setSelectedCategory(category_details)
     handlePresentDetailCategoryModalPress()
+  }
+
+  function showDeleteTransactionConfirmation(transaction: Transactions) {
+    setSelectedTransaction(transaction)
+    handlePresentDeleteTransactionModalPress()
   }
 
   async function handleAddCategory() {
@@ -118,13 +136,7 @@ export default function Dashboard() {
         const response = await indexCategory(month, year);
         const data = response.data || [];
         setCategories(data);
-
-        const budgetObj: { [key: string]: number } = {};
-        for (let i = 0; i < data.length; i++) {
-          console.log(i, data[i].amount)
-          budgetObj[data[i].name.toLowerCase()] = data[i].amount
-        }
-        setRemainingBudget(budgetObj)
+        setTotalCategory(data.length)
         setCategoriesLoaded(!categoriesLoaded)
       } catch (err) {
         console.error("Error fetching categories: ", err);
@@ -140,20 +152,15 @@ export default function Dashboard() {
         const response = await indexTransaction(month, year);
         const data = response.data || [];
         setTransactions(data);
-        console.info("fetchTransactions", data)
         let totalIncome = 0, totalExpense = 0;
-        const budgetObj: { [key: string]: number } = remainingBudget;
         for (let i = 0; i < data.length; i++) {
           if (data[i].type.toLowerCase() == "expense") {
             totalExpense += data[i].amount
-            let category_name = data[i].category_name
-            budgetObj[category_name] -= data[i].amount
           } else {
             totalIncome += data[i].amount
           }
         }
-        console.log("fetchTransactions=remainingBudget", budgetObj)
-        setRemainingBudget(budgetObj)
+        setTotalTransaction(data.length)
         setTotalIncome(totalIncome)
         setTotalExpense(totalExpense)
       } catch (err) {
@@ -162,14 +169,13 @@ export default function Dashboard() {
     };
 
     fetchTransactions();
-  }, [categoriesLoaded]);
-
+  }, [categoriesLoaded, refreshTransactions]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView className='flex-1'>
       <BottomSheetModalProvider>
         <SafeAreaView className="flex-1 bg-white">
-          <View className="flex-1 px-2">
+          <View className="flex-1 px-2 bg-white">
             <View className='mt-3 flex flex-row items-center justify-center'>
               <Pressable onPress={decreaseMonth} className='border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-l-[3px] rounded-lg'>
                 <FontAwesome5 name="chevron-left" size={16} color="black" />
@@ -180,7 +186,7 @@ export default function Dashboard() {
               </Pressable>
             </View>
             <View className='flex flex-row items-center pt-3'>
-              <Text className="text-lg font-bold">Categories</Text>
+              <Text className="text-lg font-bold">Categories ({totalCategory})</Text>
             </View>
             <View className='flex flex-row flex-wrap'>
               {categories?.length > 0 ? (
@@ -198,7 +204,7 @@ export default function Dashboard() {
             </View>
             <View className='flex flex-row items-center pt-3 justify-between pr-2'>
               <View className='flex flex-row items-center'>
-                <Text className="text-lg font-bold">Transactions</Text>
+                <Text className="text-lg font-bold">Transactions ({totalTransaction})</Text>
                 <Pressable onPress={handleAddTransaction} className='border-2 border-black px-3 py-1 m-3 z-100 rounded-md'>
                   <Text><FontAwesome5 name="plus" size={12} color="black"></FontAwesome5></Text>
                 </Pressable>
@@ -230,7 +236,18 @@ export default function Dashboard() {
                     </View>
                     <View className='flex flex-col flex-1 px-3 items-center justify-center'>
                       <Text className='text-xl font-semibold'>{item.category_name.replaceAll("_", " ").toUpperCase()}</Text>
-                      <Text className='text-sm font-normal flex-wrap text-center' numberOfLines={2}>{item.remarks}</Text>
+                      <Text className='text-sm font-normal flex-wrap text-center' numberOfLines={1}>{item.remarks}</Text>
+                      <View className='flex flex-row mt-1'>
+                        <View className='flex flex-row items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
+                          <FontAwesome5 name="eye" size={12} color="black" />
+                        </View>
+                        <View className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
+                          <FontAwesome5 name="edit" size={12} color="black" />
+                        </View>
+                        <Pressable onPress={() => showDeleteTransactionConfirmation(item)} key={item.id} className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
+                          <MaterialIcons name="delete" size={12} color="black" />
+                        </Pressable>
+                      </View>
                     </View>
                     <View className='flex flex-wrap flex-col items-center justify-center'>
                       <MaterialCommunityIcons name={`${item.type.toLowerCase() == 'expense' ? 'arrow-up' : 'arrow-down'}`} size={20} color={`${item.type.toLowerCase() == 'expense' ? 'red' : 'green'}`} />
@@ -325,28 +342,102 @@ export default function Dashboard() {
               keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
               <ScrollView
-                className=''
-                contentContainerStyle={{ padding: 16 }}
+                className='px-2 mx-2 mt-2'
                 keyboardShouldPersistTaps="handled"
               >
                 <View className='flex flex-col pt-1 pb-5 px-3 bg-white z-20'>
                   <Text className='text-2xl font-bold text-center uppercase border-b-2'>
                     Detail Category
                   </Text>
-
-                  <View className='mt-4'>
+                  <View className='mt-3'>
                     <Text className='text-slate-600 py-1'>Name</Text>
-                    <Text className='font-bold text-3xl'>{selectedCategory?.name.toUpperCase()}</Text>
+                    <Text className='font-bold text-2xl'>{selectedCategory?.name.toUpperCase()}</Text>
                   </View>
-
-                  <View className='mt-2'>
+                  <View className='mt-1'>
                     <Text className='text-slate-600 py-1'>Total Budget</Text>
-                    <Text className='font-bold text-3xl'>Rp. {new Intl.NumberFormat().format(selectedCategory ? selectedCategory.amount : 0)}</Text>
+                    <Text className='font-bold text-2xl'>Rp. {new Intl.NumberFormat().format(selectedCategory ? selectedCategory.amount : 0)}</Text>
+                  </View>
+                  <View className='mt-1'>
+                    <Text className='text-slate-600 py-1'>Remaining Budget</Text>
+                    <Text className='font-bold text-2xl'>Rp. {new Intl.NumberFormat().format(selectedCategory ? selectedCategory.remaining_budget : 0)}</Text>
+                  </View>
+                  <View className='mt-1'>
+                    <Text className='text-slate-600 py-1'>Total Transactions</Text>
+                    <Text className='font-bold text-2xl'>{selectedCategory?.total_transaction} Transactions</Text>
                   </View>
 
-                  <View className='mt-2'>
-                    <Text className='text-slate-600 py-1'>Remaining Budget</Text>
-                    <Text className='font-bold text-3xl'>Rp. {new Intl.NumberFormat().format(selectedCategory ? selectedCategory.remaining_budget : 0)}</Text>
+                  <View className='mt-3 flex flex-row justify-center'>
+                    <View className='flex flex-row items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                      <FontAwesome5 name="eye" size={18} color="black" />
+                      <Text className='ml-1 font-bold text-lg'>Detail</Text>
+                    </View>
+                    <View className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                      <FontAwesome5 name="edit" size={18} color="black" />
+                      <Text className='ml-1 font-bold text-lg'>Edit</Text>
+                    </View>
+                    <View className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                      <MaterialIcons name="delete" size={18} color="black" />
+                      <Text className='ml-1 font-bold text-lg'>Delete</Text>
+                    </View>
+                  </View>
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </BottomSheetView>
+        </BottomSheetModal>
+        <BottomSheetModal
+          ref={deleteTransactionSheetModalRef}
+          onChange={handleSheetDeleteTransactionChanges}
+          keyboardBehavior="interactive"
+          keyboardBlurBehavior="restore"
+          enablePanDownToClose={true}
+          backdropComponent={(props: any) => (
+            <BottomSheetBackdrop
+              {...props}
+              appearsOnIndex={0}
+              disappearsOnIndex={-1}
+              pressBehavior="close" // 👈 this makes outside tap close the modal
+            />
+          )}
+        >
+          <BottomSheetView style={{ flex: 1 }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+              <ScrollView
+                className='px-2 mx-2 mt-2'
+                keyboardShouldPersistTaps="handled"
+              >
+                <View className='flex flex-col pt-1 pb-5 px-3 bg-white z-20'>
+                  <Text className='text-2xl font-bold text-center uppercase border-b-2'>
+                    Delete Confirmation!
+                  </Text>
+                  <View className='mt-3'>
+                    <Text className='text-black py-1 text-center text-xl'>Are you sure you want to delete this transaction?</Text>
+                    <View className='flex flex-row justify-center items-center mt-6'>
+                      <Fontisto name='date' size={16} color="black"></Fontisto>
+                      <Text className='ml-2 text-lg'>{selectedTransaction?.transaction_date}</Text>
+                    </View>
+                    <View className='flex flex-row justify-center items-center mt-1'>
+                      <MaterialIcons name='category' size={16} color="black"></MaterialIcons>
+                      <Text className='ml-2 text-lg'>{selectedTransaction?.category_name.toUpperCase()}</Text>
+                    </View>
+                    <View className='flex flex-row justify-center items-center mt-1'>
+                      <FontAwesome name='money' size={16} color="black"></FontAwesome>
+                      <Text className='ml-2 text-lg'>Rp. {new Intl.NumberFormat().format(selectedTransaction?.amount || 0)}</Text>
+                    </View>
+                  </View>
+                  <View className='flex flex-row justify-center mt-6'>
+                    <Pressable onPress={() => {handleDeleteTransaction(selectedTransaction?.id || "")}} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                      <FontAwesome name="check-square-o" size={18} color="black" />
+                      <Text className='ml-1 font-bold text-lg'>Yes</Text>
+                    </Pressable>
+                    <Pressable onPress={() => {handleDismissPress(deleteTransactionSheetModalRef)}} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                      <FontAwesome name="close" size={18} color="black" />
+                      <Text className='ml-1 font-bold text-lg'>Cancel</Text>
+                    </Pressable>
                   </View>
                 </View>
               </ScrollView>

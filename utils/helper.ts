@@ -1,45 +1,99 @@
 import { router } from "expo-router";
+import { ToastAndroid } from "react-native";
 
-export const BASE_URL = "https://api.moniplan.halomoan.id"
-const monthLabel = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+export const BASE_URL = "https://api.moniplan.halomoan.id";
+const monthLabel = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
 
 export const getCurrentDate = () => {
-    const currentDate = new Date();
-    currentDate.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })
-    return currentDate
-  };
+	const currentDate = new Date();
+	currentDate.toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
+	return currentDate;
+};
+
+export const getCurrentTime = () => {
+	const currentDate = new Date();
+	currentDate.toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
+	return currentDate;
+};
 
 export const getRandomInt = (min: number, max: number) => {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+};
 
 export const formatDate = (value: Date) => {
-    return value.getDate() + " " + monthLabel[value.getMonth()] + " " + value.getFullYear()
-}
+	return (
+		value.getDate() +
+		" " +
+		monthLabel[value.getMonth()] +
+		" " +
+		value.getFullYear()
+	);
+};
+
+export const formatDateAPI = (value: Date) => {
+	let month =
+		value.getMonth() + 1 < 10
+			? "0" + (value.getMonth() + 1)
+			: value.getMonth() + 1;
+	let date = value.getDate() < 10 ? "0" + value.getDate() : value.getDate();
+	return value.getFullYear() + "-" + month + "-" + date;
+};
+
+export const formatTime = (value: Date) => {
+	value.toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
+	const hours = value.getHours();
+	let parsed_hours = hours < 10 ? "0" + hours : "" + hours;
+	let minutes = value.getMinutes();
+	let parsed_minutes = minutes < 10 ? "0" + minutes : "" + minutes;
+	let seconds = value.getSeconds();
+	let parsed_seconds = seconds < 10 ? "0" + seconds : "" + seconds;
+	return parsed_hours + ":" + parsed_minutes + ":" + parsed_seconds;
+};
 
 export const getDetailDate = (value: string) => {
-  return value.split(" ")
-}
+	return value.split(" ");
+};
 
 export const redirectToDashboard = () => {
-  router.push("/(tabs)/dashboard")
-}
+	router.push("/(tabs)/dashboard");
+};
 
 export const redirectToRegisterPage = () => {
-  router.push('/register');
+	router.push("/register");
 };
 
 export const redirectToLoginPage = () => {
-  router.push("/login")
-}
+	router.push("/login");
+};
 
 export const isEmptyPlainObject = (obj: any) => {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    obj.constructor === Object &&
-    Object.keys(obj).length === 0
-  );
-}
+	return (
+		typeof obj === "object" &&
+		obj !== null &&
+		obj.constructor === Object &&
+		Object.keys(obj).length === 0
+	);
+};
+
+export const showShortToast = (message: string) => {
+	ToastAndroid.show(message, ToastAndroid.SHORT);
+};
+
+export const showLongToast = (message: string) => {
+	ToastAndroid.show(message, ToastAndroid.LONG);
+};

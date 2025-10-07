@@ -14,7 +14,6 @@ export const indexCategory = async (_month: Number, _year: Number) => {
         "Authorization": "Bearer " + user.token
       }
     });
-    console.log("indexCategory: ", response.data)
     return response.data;
   } catch (error: any) {
     console.error("Index Category failed:", error.response.data);

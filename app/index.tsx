@@ -28,9 +28,7 @@ export default function Index() {
     useEffect(() => {
         const checkSession = async () => {
             const user = await getUserSession();
-            console.log("users", user)
             if (user && user !== null) {
-                console.log(user)
                 setIsLoggedIn(true);
                 setUserLoggedIn(user);
                 redirectToDashboard()

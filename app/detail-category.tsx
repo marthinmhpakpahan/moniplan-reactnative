@@ -7,7 +7,7 @@ import { Alert, Modal, Platform, Pressable, Text, TextInput, View } from "react-
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Categories } from './models/categories';
 import { indexCategory } from './services/categories';
-import { formatDate, formatDateAPI, formatTime, getCurrentDate, getCurrentTime, getRandomInt } from '@/utils/helper';
+import { formatDate, getCurrentDate, getCurrentTime, getRandomInt } from '@/utils/helper';
 import { createTransaction } from './services/transactions';
 
 export default function CreateTransaction() {
@@ -32,13 +32,6 @@ export default function CreateTransaction() {
         let _currentDate = selectedDate || date;
         setShowDatePicker(Platform.OS === 'ios'); // iOS keeps picker open
         setDate(_currentDate);
-    };
-
-    const onChangeTimePicker = (event: any, selectedTime?: Date) => {
-        let _currentTime = selectedTime || time;
-        console.log("selectedTime", selectedTime)
-        setShowTimePicker(Platform.OS === 'ios'); // iOS keeps picker open
-        setTime(_currentTime);
     };
 
     useEffect(() => {
@@ -81,7 +74,7 @@ export default function CreateTransaction() {
                 const user = await getUserSession();
                 try {
                     const response = await createTransaction(
-                        formatDateAPI(date) + " " + formatTime(time), parseInt(categoryID), amount, "Expense", remarks
+                        parseInt(categoryID), amount, "Expense", remarks
                     );
 
                     if (!response.error) {
@@ -116,7 +109,7 @@ export default function CreateTransaction() {
                     <View className='grow mx-2'>
                         <View className='flex flex-row items-end'>
                             <MaterialIcons name="access-time" size={20} color="black" />
-                            <TextInput showSoftInputOnFocus={false} value={formatTime(time)} onPress={() => { setShowTimePicker(true) }} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4 text-black ml-1'></TextInput>
+                            <TextInput showSoftInputOnFocus={false} value={time} onPress={() => { setShowTimePicker(true) }} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4 text-black ml-1'></TextInput>
                         </View>
                     </View>
                 </View>
@@ -145,17 +138,17 @@ export default function CreateTransaction() {
             {showDatePicker && (
                 <DateTimePicker
                     value={date}
-                    mode="date" 
-                    display="default" 
+                    mode="date" // 'date' | 'time' | 'datetime'
+                    display="default" // 'default' | 'spinner' | 'calendar' | 'clock'
                     onChange={onChangeDatePicker}
                 />
             )}
             {showTimePicker && (
                 <DateTimePicker
-                    value={time}
-                    mode="time" 
-                    display="default" 
-                    onChange={onChangeTimePicker}
+                    value={date}
+                    mode="date" // 'date' | 'time' | 'datetime'
+                    display="default" // 'default' | 'spinner' | 'calendar' | 'clock'
+                    onChange={onChangeDatePicker}
                 />
             )}
             <Modal
