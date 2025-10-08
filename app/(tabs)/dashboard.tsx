@@ -15,7 +15,7 @@ import { Categories, getDetailCategory } from '../models/categories';
 import { Transactions } from '../models/transactions';
 
 // SERVICES
-import { createCategory, indexCategory } from '../services/categories';
+import { createCategory, indexCategory, updateCategory } from '../services/categories';
 import { deleteTransaction, indexTransaction } from '../services/transactions';
 import { getCurrentDate, getDetailDate, setupLogout, showShortToast } from '@/utils/helper';
 
@@ -37,8 +37,8 @@ export default function Dashboard() {
   const [refreshTransactions, setRefreshTransactions] = useState<boolean>(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transactions>();
 
-  const [categoryName, setCategoryName] = useState("");
-  const [totalBudget, setTotalBudget] = useState("");
+  const [inputCategoryName, setInputCategoryName] = useState("");
+  const [inputTotalBudget, setInputTotalBudget] = useState("");
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [totalTransaction, setTotalTransaction] = useState(0);
@@ -72,26 +72,41 @@ export default function Dashboard() {
   const handleSheetEditCategoryChanges = useCallback((index: number) => {
   }, []);
 
-  const handleDismissPress = (bottomSheetModalRef: any) => {
-    bottomSheetModalRef.current?.close();
-  };
-
   const handleDeleteTransaction = async (transaction_id: string) => {
     const response = await deleteTransaction(transaction_id);
     if (!response.error) {
       setRefreshTransactions(!refreshTransactions)
-      handleDismissPress(deleteTransactionSheetModalRef)
+      deleteTransactionSheetModalRef.current?.close()
+      deleteTransactionSheetModalRef.current?.dismiss()
       showShortToast("Transaction deleted successfully!")
     }
   };
 
   const handleEditCategory = async () => {
-
+    try {
+      const response = await updateCategory(
+        (selectedCategory?.id || ""), inputCategoryName, month, year, parseInt(inputTotalBudget)
+      );
+      if(!response.error) {
+        setRefreshCategories(!refreshCategories)
+        editCategorySheetModalRef.current?.close()
+        editCategorySheetModalRef.current?.dismiss
+        detailCategorySheetModalRef.current?.close()
+        detailCategorySheetModalRef.current?.dismiss()
+        showShortToast("Category successfully updated!")
+      } else {
+        showShortToast("Error in updating category!")
+      }
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+    resetFormCategoryValue()
+    setRefreshCategories(!refreshCategories)
   };
 
   const resetFormCategoryValue = () => {
-    setCategoryName("")
-    setTotalBudget("")
+    setInputCategoryName("")
+    setInputTotalBudget("")
   }
 
   function increaseMonth() {
@@ -128,22 +143,24 @@ export default function Dashboard() {
   }
 
   function showEditCategoryForm() {
-    handleDismissPress(detailCategorySheetModalRef)
+    setInputCategoryName(selectedCategory?.name || "");
+    setInputTotalBudget(selectedCategory?.amount.toString() || "")
+    detailCategorySheetModalRef.current?.close()
+    detailCategorySheetModalRef.current?.dismiss()
     handlePresentEditCategoryModalPress()
   }
 
   async function handleAddCategory() {
     try {
       const response = await createCategory(
-        categoryName, month, year, parseInt(totalBudget)
+        inputCategoryName, month, year, parseInt(inputTotalBudget)
       );
       setRefreshCategories(!refreshCategories)
       bottomSheetModalRef.current?.close();
     } catch (e) {
       console.error("Error adding document: ", e);
     }
-    setCategoryName("")
-    setTotalBudget("")
+    resetFormCategoryValue()
     setRefreshCategories(!refreshCategories)
   }
 
@@ -318,8 +335,8 @@ export default function Dashboard() {
                   <View className='mt-4'>
                     <Text className='text-slate-800 py-1 font-semibold'>Category Name</Text>
                     <BottomSheetTextInput
-                      value={categoryName}
-                      onChangeText={setCategoryName}
+                      value={inputCategoryName}
+                      onChangeText={setInputCategoryName}
                       className='border border-black rounded-lg text-black'
                     />
                   </View>
@@ -327,8 +344,8 @@ export default function Dashboard() {
                   <View className='mt-2'>
                     <Text className='text-slate-800 py-1 font-semibold'>Total Budget (Rp)</Text>
                     <BottomSheetTextInput
-                      value={totalBudget}
-                      onChangeText={setTotalBudget}
+                      value={inputTotalBudget}
+                      onChangeText={setInputTotalBudget}
                       className='border border-black rounded-lg text-black'
                     />
                   </View>
@@ -457,7 +474,7 @@ export default function Dashboard() {
                       <FontAwesome name="check-square-o" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Yes</Text>
                     </Pressable>
-                    <Pressable onPress={() => { handleDismissPress(deleteTransactionSheetModalRef) }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                    <Pressable onPress={() => { deleteTransactionSheetModalRef.current?.close }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
                       <FontAwesome name="close" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Cancel</Text>
                     </Pressable>
@@ -494,14 +511,13 @@ export default function Dashboard() {
               >
                 <View className='flex flex-col py-3 px-3'>
                   <Text className='text-xl font-bold text-center'>
-                    Edit Category
+                    Edit Category #{selectedCategory?.name}
                   </Text>
 
                   <View className='mt-4'>
                     <Text className='text-slate-800 py-1 font-semibold'>Category Name</Text>
                     <BottomSheetTextInput
-                      defaultValue={selectedCategory?.name}
-                      value={categoryName}
+                      value={inputCategoryName}
                       editable={false}
                       className='border border-black rounded-lg text-black'
                     />
@@ -510,15 +526,14 @@ export default function Dashboard() {
                   <View className='mt-2'>
                     <Text className='text-slate-800 py-1 font-semibold'>Total Budget (Rp)</Text>
                     <BottomSheetTextInput
-                      defaultValue={selectedCategory?.amount.toString()}
-                      value={totalBudget}
-                      onChangeText={setTotalBudget}
+                      value={inputTotalBudget}
+                      onChangeText={setInputTotalBudget}
                       className='border border-black rounded-lg text-black'
                     />
                   </View>
 
                   <View className='flex flex-row justify-end mt-4'>
-                    <Pressable onPress={handleAddCategory} className='border-2 border-black px-8 py-2 rounded-lg'>
+                    <Pressable onPress={handleEditCategory} className='border-2 border-black px-8 py-2 rounded-lg'>
                       <Text className='text-black font-bold'>Save</Text>
                     </Pressable>
                   </View>
