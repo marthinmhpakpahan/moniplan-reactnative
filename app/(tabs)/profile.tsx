@@ -26,7 +26,7 @@ export default function Profile() {
   return (
     <View className="flex-1 flex-col items-center justify-center">
       <Text className="text-xl font-bold">Welcome {user?.name}</Text>
-      <Pressable onPress={handleLogout} className='flex flex-row items-center py-1 px-4 border border-b-[3px] border-r-[3px] rounded-lg mt-4'>
+      <Pressable onPress={handleLogout} className='flex flex-row items-center py-[3px] px-4 border border-b-[3px] border-r-[3px] rounded-lg mt-4'>
         <MaterialCommunityIcons name="logout" size={20} color="black" />
         <Text className='font-semibold text-xl ml-1'>Logout</Text>
       </Pressable>

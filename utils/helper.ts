@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { ToastAndroid } from "react-native";
+import { removeUserSession } from "./session";
 
 export const BASE_URL = "https://api.moniplan.halomoan.id";
 const monthLabel = [
@@ -79,6 +80,11 @@ export const redirectToRegisterPage = () => {
 
 export const redirectToLoginPage = () => {
 	router.push("/login");
+};
+
+export const setupLogout = () => {
+	removeUserSession()
+	router.push("/");
 };
 
 export const isEmptyPlainObject = (obj: any) => {

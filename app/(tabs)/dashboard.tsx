@@ -17,7 +17,7 @@ import { Transactions } from '../models/transactions';
 // SERVICES
 import { createCategory, indexCategory } from '../services/categories';
 import { deleteTransaction, indexTransaction } from '../services/transactions';
-import { getCurrentDate, getDetailDate, showShortToast } from '@/utils/helper';
+import { getCurrentDate, getDetailDate, setupLogout, showShortToast } from '@/utils/helper';
 
 export default function Dashboard() {
   const { shouldRefreshData } = useLocalSearchParams();
@@ -65,18 +65,34 @@ export default function Dashboard() {
   const handleSheetDeleteTransactionChanges = useCallback((index: number) => {
   }, []);
 
-  const handleDismissPress = (bottomSheetModalRef : any) => {
+  const editCategorySheetModalRef = useRef<BottomSheetModal>(null);
+  const handlePresentEditCategoryModalPress = useCallback(() => {
+    editCategorySheetModalRef.current?.present();
+  }, []);
+  const handleSheetEditCategoryChanges = useCallback((index: number) => {
+  }, []);
+
+  const handleDismissPress = (bottomSheetModalRef: any) => {
     bottomSheetModalRef.current?.close();
   };
 
-  const handleDeleteTransaction = async (transaction_id : string) => {
+  const handleDeleteTransaction = async (transaction_id: string) => {
     const response = await deleteTransaction(transaction_id);
-    if(!response.error){
+    if (!response.error) {
       setRefreshTransactions(!refreshTransactions)
       handleDismissPress(deleteTransactionSheetModalRef)
       showShortToast("Transaction deleted successfully!")
     }
   };
+
+  const handleEditCategory = async () => {
+
+  };
+
+  const resetFormCategoryValue = () => {
+    setCategoryName("")
+    setTotalBudget("")
+  }
 
   function increaseMonth() {
     if (month == 12) {
@@ -111,6 +127,11 @@ export default function Dashboard() {
     handlePresentDeleteTransactionModalPress()
   }
 
+  function showEditCategoryForm() {
+    handleDismissPress(detailCategorySheetModalRef)
+    handlePresentEditCategoryModalPress()
+  }
+
   async function handleAddCategory() {
     try {
       const response = await createCategory(
@@ -140,6 +161,7 @@ export default function Dashboard() {
         setCategoriesLoaded(!categoriesLoaded)
       } catch (err) {
         console.error("Error fetching categories: ", err);
+        setupLogout()
       }
     };
 
@@ -165,6 +187,7 @@ export default function Dashboard() {
         setTotalExpense(totalExpense)
       } catch (err) {
         console.error("Error fetching transactions: ", err);
+        setupLogout()
       }
     };
 
@@ -371,10 +394,10 @@ export default function Dashboard() {
                       <FontAwesome5 name="eye" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Detail</Text>
                     </View>
-                    <View className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                    <Pressable onPress={() => { showEditCategoryForm() }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
                       <FontAwesome5 name="edit" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Edit</Text>
-                    </View>
+                    </Pressable>
                     <View className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
                       <MaterialIcons name="delete" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Delete</Text>
@@ -430,13 +453,73 @@ export default function Dashboard() {
                     </View>
                   </View>
                   <View className='flex flex-row justify-center mt-6'>
-                    <Pressable onPress={() => {handleDeleteTransaction(selectedTransaction?.id || "")}} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                    <Pressable onPress={() => { handleDeleteTransaction(selectedTransaction?.id || "") }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
                       <FontAwesome name="check-square-o" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Yes</Text>
                     </Pressable>
-                    <Pressable onPress={() => {handleDismissPress(deleteTransactionSheetModalRef)}} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                    <Pressable onPress={() => { handleDismissPress(deleteTransactionSheetModalRef) }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
                       <FontAwesome name="close" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Cancel</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </BottomSheetView>
+        </BottomSheetModal>
+        <BottomSheetModal
+          ref={editCategorySheetModalRef}
+          onChange={handleSheetEditCategoryChanges}
+          keyboardBehavior="interactive"
+          keyboardBlurBehavior="restore"
+          enablePanDownToClose={true}
+          backdropComponent={(props: any) => (
+            <BottomSheetBackdrop
+              {...props}
+              appearsOnIndex={0}
+              disappearsOnIndex={-1}
+              pressBehavior="close" // 👈 this makes outside tap close the modal
+            />
+          )}
+        >
+          <BottomSheetView style={{ flex: 1 }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+              <ScrollView
+                contentContainerStyle={{ padding: 16 }}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View className='flex flex-col py-3 px-3'>
+                  <Text className='text-xl font-bold text-center'>
+                    Edit Category
+                  </Text>
+
+                  <View className='mt-4'>
+                    <Text className='text-slate-800 py-1 font-semibold'>Category Name</Text>
+                    <BottomSheetTextInput
+                      defaultValue={selectedCategory?.name}
+                      value={categoryName}
+                      editable={false}
+                      className='border border-black rounded-lg text-black'
+                    />
+                  </View>
+
+                  <View className='mt-2'>
+                    <Text className='text-slate-800 py-1 font-semibold'>Total Budget (Rp)</Text>
+                    <BottomSheetTextInput
+                      defaultValue={selectedCategory?.amount.toString()}
+                      value={totalBudget}
+                      onChangeText={setTotalBudget}
+                      className='border border-black rounded-lg text-black'
+                    />
+                  </View>
+
+                  <View className='flex flex-row justify-end mt-4'>
+                    <Pressable onPress={handleAddCategory} className='border-2 border-black px-8 py-2 rounded-lg'>
+                      <Text className='text-black font-bold'>Save</Text>
                     </Pressable>
                   </View>
                 </View>
