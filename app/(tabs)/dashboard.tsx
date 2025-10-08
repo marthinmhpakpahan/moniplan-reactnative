@@ -1,4 +1,4 @@
-import { FontAwesome, FontAwesome5, FontAwesome6, Fontisto, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5, Fontisto, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -17,7 +17,7 @@ import { Transactions } from '../models/transactions';
 // SERVICES
 import { createCategory, indexCategory } from '../services/categories';
 import { deleteTransaction, indexTransaction } from '../services/transactions';
-import { getCurrentDate, getDetailDate, getRandomInt, isEmptyPlainObject, showLongToast, showShortToast } from '@/utils/helper';
+import { getCurrentDate, getDetailDate, showShortToast } from '@/utils/helper';
 
 export default function Dashboard() {
   const { shouldRefreshData } = useLocalSearchParams();
