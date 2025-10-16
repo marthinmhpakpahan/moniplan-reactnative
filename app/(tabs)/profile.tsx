@@ -3,7 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { Users } from '../models/users';
 import { useEffect, useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { redirectToLoginPage } from '@/utils/helper';
+import { redirectToLoginPage, setupLogout } from '@/utils/helper';
 
 export default function Profile() {
 
@@ -19,8 +19,7 @@ export default function Profile() {
   }, [user]);
 
   function handleLogout() {
-    removeUserSession()
-    redirectToLoginPage()
+    setupLogout()
   }
 
   return (

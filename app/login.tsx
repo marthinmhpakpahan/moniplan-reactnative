@@ -11,10 +11,12 @@ import {
     TextInput,
     TouchableWithoutFeedback,
     View,
+    Image
 } from 'react-native';
 import { saveUserSession } from '../utils/session';
 import { login } from './services/users';
 import { redirectToDashboard, redirectToRegisterPage } from '@/utils/helper';
+import { Entypo } from '@expo/vector-icons';
 
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -68,7 +70,9 @@ export default function Login() {
                     }}
                 >
                     <View className="px-6 bg-white">
-                        <Text className="text-4xl font-bold text-center mb-6">Login</Text>
+                        <View className='flex flex-row justify-center items-center mb-6'>
+                            <Text className="text-4xl font-bold text-center ml-1">Login</Text>
+                        </View>
 
                         {error ? (
                             <Text className="text-red-600 text-center mb-4">{error}</Text>
@@ -103,7 +107,10 @@ export default function Login() {
                             {loading ? (
                                 <ActivityIndicator color="#000" />
                             ) : (
-                                <Text className="text-black font-bold text-center">Login</Text>
+                                <View className='flex flex-row items-center'>
+                                    <Entypo name="login" size={16} color="black"></Entypo>
+                                    <Text className="text-black ml-1 font-bold text-center">Login</Text>
+                                </View>
                             )}
                         </Pressable>
 
