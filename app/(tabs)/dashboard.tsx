@@ -17,7 +17,7 @@ import { Transactions } from '../models/transactions';
 // SERVICES
 import { createCategory, indexCategory, updateCategory } from '../services/categories';
 import { deleteTransaction, indexTransaction } from '../services/transactions';
-import { getCurrentDate, getDetailDate, setupLogout, showShortToast } from '@/utils/helper';
+import { getCurrentDate, getDetailDate, redirectToDetailCategoryPage, setupLogout, showShortToast } from '@/utils/helper';
 
 export default function Dashboard() {
   const { shouldRefreshData } = useLocalSearchParams();
@@ -75,7 +75,7 @@ export default function Dashboard() {
   const handleDeleteTransaction = async (transaction_id: string) => {
     const response = await deleteTransaction(transaction_id);
     if (!response.error) {
-      setRefreshTransactions(!refreshTransactions)
+      setRefreshCategories(!refreshCategories)
       deleteTransactionSheetModalRef.current?.close()
       deleteTransactionSheetModalRef.current?.dismiss()
       showShortToast("Transaction deleted successfully!")
@@ -188,7 +188,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await indexTransaction(month, year);
+        const response = await indexTransaction(month, year, 0);
         const data = response.data || [];
         setTransactions(data);
         let totalIncome = 0, totalExpense = 0;
@@ -407,10 +407,10 @@ export default function Dashboard() {
                   </View>
 
                   <View className='mt-3 flex flex-row justify-center'>
-                    <View className='flex flex-row items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                    <Pressable onPress={() => { redirectToDetailCategoryPage(selectedCategory?.id || "", selectedCategory?.name || "", selectedCategory?.amount || 0, selectedCategory?.remaining_budget || 0, selectedCategory?.total_transaction || 0) }} className='flex flex-row items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
                       <FontAwesome5 name="eye" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Detail</Text>
-                    </View>
+                    </Pressable>
                     <Pressable onPress={() => { showEditCategoryForm() }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
                       <FontAwesome5 name="edit" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Edit</Text>

@@ -1,179 +1,199 @@
 import { getUserSession } from '@/utils/session';
-import { FontAwesome5, Fontisto, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5, Fontisto, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, Modal, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Categories } from './models/categories';
 import { indexCategory } from './services/categories';
-import { formatDate, getCurrentDate, getCurrentTime, getRandomInt } from '@/utils/helper';
-import { createTransaction } from './services/transactions';
+import { formatCurrency, formatDate, formatDateAPI, formatTime, getCurrentDate, getCurrentTime, getDetailDate, getRandomInt, redirectToDashboard, showShortToast } from '@/utils/helper';
+import { createTransaction, deleteTransaction, indexTransaction } from './services/transactions';
+import { Transactions } from './models/transactions';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetView } from '@gorhom/bottom-sheet';
 
-export default function CreateTransaction() {
+export default function DetailCategory() {
+
+    const { id, name, amount, remaining_budget, total_transaction } = useLocalSearchParams();
+    const [transactions, setTransactions] = useState<Transactions[]>([]);
     const currentDate = getCurrentDate()
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
-    const currentTime = getCurrentTime()
+    const monthLabel = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
-    const [categoryID, setCategoryID] = useState("")
-    const [categoryName, setCategoryName] = useState("")
-    const [categories, setCategories] = useState<Categories[]>([]);
-
-    const [date, setDate] = useState(currentDate);
-    const [time, setTime] = useState(currentTime);
-    const [amount, setAmount] = useState(0);
-    const [remarks, setRemarks] = useState("");
-    const [modalVisible, setModalVisible] = useState(false);
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showTimePicker, setShowTimePicker] = useState(false);
-
-    const onChangeDatePicker = (event: any, selectedDate?: Date) => {
-        let _currentDate = selectedDate || date;
-        setShowDatePicker(Platform.OS === 'ios'); // iOS keeps picker open
-        setDate(_currentDate);
-    };
+    const [selectedTransaction, setSelectedTransaction] = useState<Transactions>();
+    const deleteTransactionSheetModalRef = useRef<BottomSheetModal>(null);
+    const handlePresentDeleteTransactionModalPress = useCallback(() => {
+        deleteTransactionSheetModalRef.current?.present();
+    }, []);
+    const handleSheetDeleteTransactionChanges = useCallback((index: number) => {
+    }, []);
 
     useEffect(() => {
-        const fetchCategories = async () => {
+        const fetchTransactions = async () => {
             try {
-                const response = await indexCategory(currentMonth, currentYear)
-                setCategories(response.data);
+                const response = await indexTransaction(currentMonth, currentYear, parseInt(id.toString()));
+                const data = response.data || [];
+                console.log(data.length)
+                setTransactions(data);
+                console.log(transactions.length)
             } catch (err) {
-                console.error("Error fetching categories: ", err);
+                console.error("Error fetching transactions: ", err);
             }
         };
 
-        fetchCategories();
+        fetchTransactions();
     }, []);
 
-    const setSelectedCategory = (key: any, value: any) => {
-        setCategoryID(key)
-        setCategoryName(value)
-        setModalVisible(false)
+    function showDeleteTransactionConfirmation(transaction: Transactions) {
+        setSelectedTransaction(transaction)
+        handlePresentDeleteTransactionModalPress()
+    }
+
+    const handleDeleteTransaction = async (transaction_id: string) => {
+        const response = await deleteTransaction(transaction_id);
+        if (!response.error) {
+            showShortToast("Transaction deleted successfully!")
+            redirectToDashboard()
+        }
     };
 
-    const redirectToDashboard = () => {
-        router.push({
-            pathname: "/(tabs)/dashboard",
-            params: {
-                shouldRefreshData: getRandomInt(1, 100),
-            },
-        });
-    }
-
-    async function handleSaveButton() {
-        let is_valid = true;
-        if (amount === 0 || categoryID === "") {
-            is_valid = false;
-            Alert.alert("Warning!", "Please fill the required fields!")
-        }
-
-        if (is_valid) {
-            try {
-                const user = await getUserSession();
-                try {
-                    const response = await createTransaction(
-                        parseInt(categoryID), amount, "Expense", remarks
-                    );
-
-                    if (!response.error) {
-                        redirectToDashboard()
-                    }
-                } catch (e) {
-                    console.error("Error adding document: ", e);
-                }
-            } catch (e) {
-                Alert.alert("ERROR", "Error happened!")
-            }
-        }
-    }
-
     return (
-        <GestureHandlerRootView>
-            <View className='flex flex-col'>
-                <View className='flex flex-row items-center mt-8 pb-3 px-2 border-b-2 border-gray-500'>
-                    <Pressable onPress={redirectToDashboard} className='px-2 py-1'>
-                        <FontAwesome5 name="arrow-left" size={24} />
-                    </Pressable>
-                    <Text className='ml-4 text-xl font-bold'>Create Transaction</Text>
-                </View>
-                <View className='flex flex-row items-end mt-4 px-3 '>
-                    <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Date</Text>
-                    <View className='grow mx-2'>
-                        <View className='flex flex-row items-end'>
-                            <Fontisto name="date" size={20} color="black" />
-                            <TextInput showSoftInputOnFocus={false} value={formatDate(date)} onPress={() => { setShowDatePicker(true) }} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4 text-black ml-1'></TextInput>
+        <GestureHandlerRootView className='flex-1'>
+            <BottomSheetModalProvider>
+                <SafeAreaView className="flex-1 bg-white">
+                    <View className='flex-1 flex-col'>
+                        <View className='flex flex-row items-center mt-8 pb-3 px-2 border-b-2 border-gray-500'>
+                            <Pressable onPress={redirectToDashboard} className='px-2 py-1'>
+                                <FontAwesome5 name="arrow-left" size={24} />
+                            </Pressable>
+                            <Text className='ml-4 text-xl font-bold'>Detail Category #{id}</Text>
+                        </View>
+                        <View className='flex flex-col mt-4 px-3'>
+                            <Text className='text-sm font-semibold'>ID Category</Text>
+                            <Text className='ml-2 text-3xl font-bold'>#{id.toString().toUpperCase()}</Text>
+                        </View>
+                        <View className='flex flex-col mt-2 px-3'>
+                            <Text className='text-sm font-semibold'>Category Name</Text>
+                            <Text className='ml-2 text-3xl font-bold'>{name.toString().toUpperCase()}</Text>
+                        </View>
+                        <View className='flex flex-col mt-2 px-3'>
+                            <Text className='text-sm font-semibold'>Total Budget</Text>
+                            <Text className='ml-2 text-3xl font-bold'>Rp. {formatCurrency(parseInt(amount.toString()))}</Text>
+                        </View>
+                        <View className='flex flex-col mt-2 px-3'>
+                            <Text className='text-sm font-semibold'>Remaining Budget</Text>
+                            <Text className='ml-2 text-3xl font-bold'>Rp. {formatCurrency(parseInt(remaining_budget.toString()))}</Text>
+                        </View>
+                        <View className='flex flex-col mt-2 px-3'>
+                            <Text className='text-sm font-semibold'>Total Transactions</Text>
+                            <Text className='ml-2 text-3xl font-bold'>{total_transaction} Transactions</Text>
+                        </View>
+                        <View className='flex-1 flex-col mt-6 px-3'>
+                            <View className='flex flex-row items-center'>
+                            <MaterialIcons name="view-list" size={22} color="black" />
+                                <Text className='ml-1 text-2xl font-bold'>Transactions</Text>
+                            </View>
+                            <ScrollView className='flex-1' showsVerticalScrollIndicator={false}>
+                                {transactions?.length > 0 ? (
+                                    transactions.map((item) => (
+                                        <Pressable key={item.id} className='flex flex-row justify-between border border-black mx-1 my-1 px-3 py-2 border-b-[3px] border-r-[3px] rounded-lg'>
+                                            <View className='flex flex-col border-[1px] items-center py-1 px-2 rounded-lg'>
+                                                <View className='flex flex-row items-center justify-between '>
+                                                    <Fontisto name="date" size={20} color="black" />
+                                                    <Text className='text-3xl ml-2 font-bold'>{getDetailDate(item.transaction_date || "")[1]}</Text>
+                                                </View>
+                                                <View className='flex flex-row items-center justify-between'>
+                                                    <MaterialIcons name="access-time" size={20} color="black" />
+                                                    <Text className='text-md ml-2 font-bold'>{getDetailDate(item.transaction_date || "")[4]}</Text>
+                                                </View>
+                                            </View>
+                                            <View className='flex flex-col flex-1 px-3 items-center justify-center'>
+                                                <Text className='text-xl font-semibold'>{item.category_name.replaceAll("_", " ").toUpperCase()}</Text>
+                                                <Text className='text-sm font-normal flex-wrap text-center' numberOfLines={1}>{item.remarks}</Text>
+                                                <View className='flex flex-row mt-1'>
+                                                    <View className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
+                                                        <FontAwesome5 name="edit" size={12} color="black" />
+                                                    </View>
+                                                    <Pressable onPress={() => showDeleteTransactionConfirmation(item)} key={item.id} className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
+                                                        <MaterialIcons name="delete" size={12} color="black" />
+                                                    </Pressable>
+                                                </View>
+                                            </View>
+                                            <View className='flex flex-wrap flex-col items-center justify-center'>
+                                                <MaterialCommunityIcons name={`${item.type.toLowerCase() == 'expense' ? 'arrow-up' : 'arrow-down'}`} size={20} color={`${item.type.toLowerCase() == 'expense' ? 'red' : 'green'}`} />
+                                                <Text className={`${item.type.toLowerCase() == 'expense' ? 'text-red-600' : 'text-green-800'} text-md font-bold`}>Rp.</Text>
+                                                <Text className={`${item.type.toLowerCase() == 'expense' ? 'text-red-600' : 'text-green-800'} text-2xl font-bold`}>{new Intl.NumberFormat().format(item.amount / 1000)}K</Text>
+                                            </View>
+                                        </Pressable>
+                                    ))
+                                ) : (
+                                    <><Text>No Transactions!</Text></>
+                                )}
+                            </ScrollView>
                         </View>
                     </View>
-                    <View className='grow mx-2'>
-                        <View className='flex flex-row items-end'>
-                            <MaterialIcons name="access-time" size={20} color="black" />
-                            <TextInput showSoftInputOnFocus={false} value={time} onPress={() => { setShowTimePicker(true) }} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4 text-black ml-1'></TextInput>
-                        </View>
-                    </View>
-                </View>
-                <View className='flex flex-row items-end mt-4 px-3 '>
-                    <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Amount</Text>
-                    <TextInput value={amount.toString() == "0" || amount.toString() == "" ? "0" : amount.toString()} onChangeText={text => setAmount(parseInt(text == "0" || text == "" ? "0" : text))} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4 text-black'></TextInput>
-                </View>
-                <View className='flex flex-row items-end mt-4 px-3 '>
-                    <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Category</Text>
-                    <TextInput showSoftInputOnFocus={false} caretHidden={true} value={categoryName.toUpperCase()} onPress={() => setModalVisible(true)} className='col-start-1 grow col-span-4 font-bold border-b border-slate-400 w-max pb-[1px] pt-4'></TextInput>
-                </View>
-                <View className='flex flex-row items-end mt-4 px-3 '>
-                    <Text className='col-start-1 col-span-2 mr-2 w-24 text-slate-600'>Note</Text>
-                    <TextInput multiline numberOfLines={5} textAlignVertical="top" value={remarks} onChangeText={text => setRemarks(text)} className='col-start-1 flex-1 text-wrap col-span-4 font-bold border-[1px] border-slate-400 h-[100px] text-black'></TextInput>
-                </View>
-                <View className='flex flex-row mt-6 px-3 justify-end'>
-                    <Pressable className='flex flex-row items-center border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
-                        <Ionicons name="reload-circle-outline" size={13} color="black" />
-                        <Text className='font-bold ml-2'>Reset Form</Text>
-                    </Pressable>
-                    <Pressable onPress={handleSaveButton} className='flex flex-row items-center border border-black mx-1 my-1 px-3 py-1 border-b-[3px] border-r-[3px]'>
-                        <FontAwesome5 name="save" size={13} color="black" />
-                        <Text className='font-bold ml-2'>Save</Text></Pressable>
-                </View>
-            </View>
-            {showDatePicker && (
-                <DateTimePicker
-                    value={date}
-                    mode="date" // 'date' | 'time' | 'datetime'
-                    display="default" // 'default' | 'spinner' | 'calendar' | 'clock'
-                    onChange={onChangeDatePicker}
-                />
-            )}
-            {showTimePicker && (
-                <DateTimePicker
-                    value={date}
-                    mode="date" // 'date' | 'time' | 'datetime'
-                    display="default" // 'default' | 'spinner' | 'calendar' | 'clock'
-                    onChange={onChangeDatePicker}
-                />
-            )}
-            <Modal
-                animationType="slide" // Or "fade", "none"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)} // For Android back button
-            >
-                <View className='flex-1 items-center justify-center '>
-                    <View className='flex flex-col border bg-white w-2/3 border-b-[5px] border-t-[2px] border-l-[2px] border-r-[2px]'>
-                        <Text className='text-center my-6 font-bold text-2xl uppercase'>Select Category</Text>
-                        <View className='flex flex-col border-t-[2px]'>
-                            {categories.length > 0 ? (
-                                categories.map((item) => ( // Use map here
-                                    <Pressable onPress={() => { setSelectedCategory(item.id, item.name) }} key={item.id} className='px-3 py-3 border-b-[1px] border-slate-400'>
-                                        <Text className='text-center text-lg font-bold'>{item.name.toUpperCase()} ({item.amount.toString().length <= 6 ? item.amount.toString().slice(0, -3) + "K" : item.amount.toString().slice(0, -6) + "M"})</Text>
-                                    </Pressable>
-                                ))
-                            ) : (
-                                <></>
-                            )}
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                </SafeAreaView>
+                <BottomSheetModal
+                    ref={deleteTransactionSheetModalRef}
+                    onChange={handleSheetDeleteTransactionChanges}
+                    keyboardBehavior="interactive"
+                    keyboardBlurBehavior="restore"
+                    enablePanDownToClose={true}
+                    backdropComponent={(props: any) => (
+                        <BottomSheetBackdrop
+                            {...props}
+                            appearsOnIndex={0}
+                            disappearsOnIndex={-1}
+                            pressBehavior="close" // 👈 this makes outside tap close the modal
+                        />
+                    )}
+                >
+                    <BottomSheetView style={{ flex: 1 }}>
+                        <KeyboardAvoidingView
+                            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                            style={{ flex: 1 }}
+                            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+                        >
+                            <ScrollView
+                                className='px-2 mx-2 mt-2'
+                                keyboardShouldPersistTaps="handled"
+                            >
+                                <View className='flex flex-col pt-1 pb-5 px-3 bg-white z-20'>
+                                    <Text className='text-2xl font-bold text-center uppercase border-b-2'>
+                                        Delete Confirmation!
+                                    </Text>
+                                    <View className='mt-3'>
+                                        <Text className='text-black py-1 text-center text-xl'>Are you sure you want to delete this transaction?</Text>
+                                        <View className='flex flex-row justify-center items-center mt-6'>
+                                            <Fontisto name='date' size={16} color="black"></Fontisto>
+                                            <Text className='ml-2 text-lg'>{selectedTransaction?.transaction_date}</Text>
+                                        </View>
+                                        <View className='flex flex-row justify-center items-center mt-1'>
+                                            <MaterialIcons name='category' size={16} color="black"></MaterialIcons>
+                                            <Text className='ml-2 text-lg'>{selectedTransaction?.category_name.toUpperCase()}</Text>
+                                        </View>
+                                        <View className='flex flex-row justify-center items-center mt-1'>
+                                            <FontAwesome name='money' size={16} color="black"></FontAwesome>
+                                            <Text className='ml-2 text-lg'>Rp. {new Intl.NumberFormat().format(selectedTransaction?.amount || 0)}</Text>
+                                        </View>
+                                    </View>
+                                    <View className='flex flex-row justify-center mt-6'>
+                                        <Pressable onPress={() => { handleDeleteTransaction(selectedTransaction?.id || "") }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                                            <FontAwesome name="check-square-o" size={18} color="black" />
+                                            <Text className='ml-1 font-bold text-lg'>Yes</Text>
+                                        </Pressable>
+                                        <Pressable onPress={() => { deleteTransactionSheetModalRef.current?.close }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                                            <FontAwesome name="close" size={18} color="black" />
+                                            <Text className='ml-1 font-bold text-lg'>Cancel</Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            </ScrollView>
+                        </KeyboardAvoidingView>
+                    </BottomSheetView>
+                </BottomSheetModal>
+            </BottomSheetModalProvider>
         </GestureHandlerRootView>
     );
 }

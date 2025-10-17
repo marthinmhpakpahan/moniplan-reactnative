@@ -66,6 +66,10 @@ export const formatTime = (value: Date) => {
 	return parsed_hours + ":" + parsed_minutes + ":" + parsed_seconds;
 };
 
+export const formatCurrency = (value: number) => {
+	return new Intl.NumberFormat().format(value);
+}
+
 export const getDetailDate = (value: string) => {
 	return value.split(" ");
 };
@@ -76,6 +80,10 @@ export const redirectToDashboard = () => {
 
 export const redirectToRegisterPage = () => {
 	router.push("/register");
+};
+
+export const redirectToDetailCategoryPage = (id: string, name: string, amount: number, remaining_budget: number, total_transaction: number) => {
+	router.push(`/detail-category?id=${id}&name=${name}&amount=${amount}&remaining_budget=${remaining_budget}&total_transaction=${total_transaction}`);
 };
 
 export const redirectToLoginPage = () => {

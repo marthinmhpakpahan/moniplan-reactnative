@@ -7,10 +7,12 @@ type WhereFilterOp =
   "<" | "<=" | "==" | "!=" | ">=" | ">" |
   "array-contains" | "in" | "not-in" | "array-contains-any";
 
-export const indexTransaction = async (_month: Number, _year: Number) => {
+export const indexTransaction = async (_month: Number, _year: Number, _category_id: number) => {
   try {
     const user = await getUserSession()
-    const response = await axios.get(BASE_URL + "/api/v1/transaction?month="+_month+"&year="+_year, {
+    const url = BASE_URL + "/api/v1/transaction?month="+_month+"&year="+_year+"&category_id="+_category_id
+    console.log("indexTransaction: ", url)
+    const response = await axios.get(url, {
       headers: {
         "Authorization": "Bearer " + user.token
       }
