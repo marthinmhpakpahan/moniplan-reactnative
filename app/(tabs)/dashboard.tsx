@@ -17,7 +17,7 @@ import { Transactions } from '../models/transactions';
 // SERVICES
 import { createCategory, indexCategory, updateCategory } from '../services/categories';
 import { deleteTransaction, indexTransaction } from '../services/transactions';
-import { getCurrentDate, getDetailDate, redirectToDetailCategoryPage, setupLogout, showShortToast } from '@/utils/helper';
+import { formatCurrency, getCurrentDate, getDetailDate, redirectToDetailCategoryPage, setupLogout, showShortToast } from '@/utils/helper';
 
 export default function Dashboard() {
   const { shouldRefreshData } = useLocalSearchParams();
@@ -70,6 +70,13 @@ export default function Dashboard() {
     editCategorySheetModalRef.current?.present();
   }, []);
   const handleSheetEditCategoryChanges = useCallback((index: number) => {
+  }, []);
+
+  const detailTransactionSheetModalRef = useRef<BottomSheetModal>(null);
+  const handlePresentDetailTransactionModalPress = useCallback(() => {
+    detailTransactionSheetModalRef.current?.present();
+  }, []);
+  const handleSheetDetailTransactionChanges = useCallback((index: number) => {
   }, []);
 
   const handleDeleteTransaction = async (transaction_id: string) => {
@@ -135,6 +142,11 @@ export default function Dashboard() {
     let category_details = getDetailCategory(category, transactions);
     setSelectedCategory(category_details)
     handlePresentDetailCategoryModalPress()
+  }
+
+  function showDetailTransactionInfo(transaction: Transactions) {
+    setSelectedTransaction(transaction)
+    handlePresentDetailTransactionModalPress()
   }
 
   function showDeleteTransactionConfirmation(transaction: Transactions) {
@@ -278,9 +290,9 @@ export default function Dashboard() {
                       <Text className='text-xl font-semibold'>{item.category_name.replaceAll("_", " ").toUpperCase()}</Text>
                       <Text className='text-sm font-normal flex-wrap text-center' numberOfLines={1}>{item.remarks}</Text>
                       <View className='flex flex-row mt-1'>
-                        <View className='flex flex-row items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
+                        <Pressable onPress={() => showDetailTransactionInfo(item)} className='flex flex-row items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
                           <FontAwesome5 name="eye" size={12} color="black" />
-                        </View>
+                        </Pressable>
                         <View className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
                           <FontAwesome5 name="edit" size={12} color="black" />
                         </View>
@@ -536,6 +548,60 @@ export default function Dashboard() {
                     <Pressable onPress={handleEditCategory} className='border-2 border-black px-8 py-2 rounded-lg'>
                       <Text className='text-black font-bold'>Save</Text>
                     </Pressable>
+                  </View>
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </BottomSheetView>
+        </BottomSheetModal>
+        <BottomSheetModal
+          ref={detailTransactionSheetModalRef}
+          onChange={handleSheetDetailTransactionChanges}
+          keyboardBehavior="interactive"
+          keyboardBlurBehavior="restore"
+          enablePanDownToClose={true}
+          backdropComponent={(props: any) => (
+            <BottomSheetBackdrop
+              {...props}
+              appearsOnIndex={0}
+              disappearsOnIndex={-1}
+              pressBehavior="close" // 👈 this makes outside tap close the modal
+            />
+          )}
+        >
+          <BottomSheetView style={{ flex: 1 }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+              <ScrollView
+                className='px-2 mx-2 mt-2'
+                keyboardShouldPersistTaps="handled"
+              >
+                <View className='flex flex-col pt-1 pb-5 px-3 bg-white z-20'>
+                  <Text className='text-2xl font-bold text-center uppercase border-b-2'>
+                    Detail Transaction
+                  </Text>
+                  <View className='mt-3'>
+                    <Text className='text-md font-bold text-slate-600 py-1'>Date</Text>
+                    <Text className='text-md'>{selectedTransaction?.transaction_date}</Text>
+                  </View>
+                  <View className='mt-1'>
+                    <Text className='text-md font-bold text-slate-600 py-1'>Category</Text>
+                    <Text className='text-md'>{selectedTransaction?.category_name}</Text>
+                  </View>
+                  <View className='mt-1'>
+                    <Text className='text-md font-bold text-slate-600 py-1'>Type</Text>
+                    <Text className='text-md'>{selectedTransaction?.type}</Text>
+                  </View>
+                  <View className='mt-1'>
+                    <Text className='text-md font-bold text-slate-600 py-1'>Amount</Text>
+                    <Text className='text-md'>Rp. {formatCurrency(selectedTransaction?.amount || 0)}</Text>
+                  </View>
+                  <View className='mt-1'>
+                    <Text className='text-md font-bold text-slate-600 py-1'>Remarks</Text>
+                    <Text className='text-md'>{selectedTransaction?.remarks}</Text>
                   </View>
                 </View>
               </ScrollView>

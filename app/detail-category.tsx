@@ -34,9 +34,7 @@ export default function DetailCategory() {
             try {
                 const response = await indexTransaction(currentMonth, currentYear, parseInt(id.toString()));
                 const data = response.data || [];
-                console.log(data.length)
                 setTransactions(data);
-                console.log(transactions.length)
             } catch (err) {
                 console.error("Error fetching transactions: ", err);
             }

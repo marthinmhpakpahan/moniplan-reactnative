@@ -36,7 +36,6 @@ export default function CreateTransaction() {
 
     const onChangeTimePicker = (event: any, selectedTime?: Date) => {
         let _currentTime = selectedTime || time;
-        console.log("selectedTime", selectedTime)
         setShowTimePicker(Platform.OS === 'ios'); // iOS keeps picker open
         setTime(_currentTime);
     };

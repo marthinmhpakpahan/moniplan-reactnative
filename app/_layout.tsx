@@ -16,9 +16,6 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
-      console.log("Font Loaded!")
-    }
   }, [fontsLoaded]);
 
   return (<Slot />);

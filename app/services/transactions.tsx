@@ -11,7 +11,6 @@ export const indexTransaction = async (_month: Number, _year: Number, _category_
   try {
     const user = await getUserSession()
     const url = BASE_URL + "/api/v1/transaction?month="+_month+"&year="+_year+"&category_id="+_category_id
-    console.log("indexTransaction: ", url)
     const response = await axios.get(url, {
       headers: {
         "Authorization": "Bearer " + user.token
@@ -28,7 +27,6 @@ export const indexTransaction = async (_month: Number, _year: Number, _category_
 export const createTransaction = async (_transaction_date: string , _category_id: number, _amount: number, _type: string, _remarks: string) => {
   try {
     const user = await getUserSession()
-    console.log("createTransaction", _transaction_date)
     const response = await axios.post(BASE_URL + "/api/v1/transaction/create", {
       transaction_date: _transaction_date, category_id: _category_id, amount: _amount, type: _type, remarks: _remarks
     }, {
