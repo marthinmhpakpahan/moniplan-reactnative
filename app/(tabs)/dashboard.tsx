@@ -15,9 +15,9 @@ import { Categories, getDetailCategory } from '../models/categories';
 import { Transactions } from '../models/transactions';
 
 // SERVICES
-import { createCategory, indexCategory, updateCategory } from '../services/categories';
-import { deleteCategory, deleteTransaction, indexTransaction } from '../services/transactions';
-import { formatCategoryName, formatCurrency, getCurrentDate, getDetailDate, redirectToDetailCategoryPage, setupLogout, showShortToast } from '@/utils/helper';
+import { createCategory, indexCategory, updateCategory, deleteCategory } from '../services/categories';
+import { deleteTransaction, indexTransaction } from '../services/transactions';
+import { formatCategoryName, formatCurrency, getCurrentDate, getDetailDate, redirectToDetailCategoryPage, redirectToEditTransactionPage, setupLogout, showShortToast } from '@/utils/helper';
 
 export default function Dashboard() {
   const { shouldRefreshData } = useLocalSearchParams();
@@ -103,8 +103,8 @@ export default function Dashboard() {
       setRefreshCategories(!refreshCategories)
       deleteCategorySheetModalRef.current?.close()
       deleteCategorySheetModalRef.current?.dismiss()
-      setTimeout(() =>detailCategorySheetModalRef.current?.close(), 200);
-      setTimeout(() =>detailCategorySheetModalRef.current?.dismiss(), 200);
+      setTimeout(() => detailCategorySheetModalRef.current?.close(), 200);
+      setTimeout(() => detailCategorySheetModalRef.current?.dismiss(), 200);
       showShortToast("Category deleted successfully!")
     }
   };
@@ -114,7 +114,7 @@ export default function Dashboard() {
       const response = await updateCategory(
         (selectedCategory?.id || ""), inputCategoryName, month, year, parseInt(inputTotalBudget)
       );
-      if(!response.error) {
+      if (!response.error) {
         setRefreshCategories(!refreshCategories)
         editCategorySheetModalRef.current?.close()
         editCategorySheetModalRef.current?.dismiss
@@ -169,7 +169,7 @@ export default function Dashboard() {
     handlePresentDetailTransactionModalPress()
   }
 
-  function showDeleteTransactionConfirmation(transaction: Transactions) {
+  function showDeleteTransactionConfirmation(transaction: any) {
     setSelectedTransaction(transaction)
     handlePresentDeleteTransactionModalPress()
   }
@@ -318,9 +318,9 @@ export default function Dashboard() {
                         <Pressable onPress={() => showDetailTransactionInfo(item)} className='flex flex-row items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
                           <FontAwesome5 name="eye" size={12} color="black" />
                         </Pressable>
-                        <View className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
+                        <Pressable onPress={() => redirectToEditTransactionPage(item)} className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
                           <FontAwesome5 name="edit" size={12} color="black" />
-                        </View>
+                        </Pressable>
                         <Pressable onPress={() => showDeleteTransactionConfirmation(item)} key={item.id} className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
                           <MaterialIcons name="delete" size={12} color="black" />
                         </Pressable>
@@ -678,23 +678,33 @@ export default function Dashboard() {
                   </Text>
                   <View className='mt-3'>
                     <Text className='text-md font-bold text-slate-600 py-1'>Date</Text>
-                    <Text className='text-md'>{selectedTransaction?.transaction_date}</Text>
+                    <Text className='text-xl'>{selectedTransaction?.transaction_date}</Text>
                   </View>
                   <View className='mt-1'>
                     <Text className='text-md font-bold text-slate-600 py-1'>Category</Text>
-                    <Text className='text-md'>{selectedTransaction?.category_name}</Text>
+                    <Text className='text-xl'>{selectedTransaction?.category_name}</Text>
                   </View>
                   <View className='mt-1'>
                     <Text className='text-md font-bold text-slate-600 py-1'>Type</Text>
-                    <Text className='text-md'>{selectedTransaction?.type}</Text>
+                    <Text className='text-xl'>{selectedTransaction?.type}</Text>
                   </View>
                   <View className='mt-1'>
                     <Text className='text-md font-bold text-slate-600 py-1'>Amount</Text>
-                    <Text className='text-md'>Rp. {formatCurrency(selectedTransaction?.amount || 0)}</Text>
+                    <Text className='text-xl'>Rp. {formatCurrency(selectedTransaction?.amount || 0)}</Text>
                   </View>
                   <View className='mt-1'>
                     <Text className='text-md font-bold text-slate-600 py-1'>Remarks</Text>
-                    <Text className='text-md'>{selectedTransaction?.remarks}</Text>
+                    <Text className='text-xl'>{selectedTransaction?.remarks}</Text>
+                  </View>
+                  <View className='flex flex-row justify-center mt-6'>
+                    <Pressable onPress={() => redirectToEditTransactionPage(selectedTransaction)} className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
+                      <FontAwesome5 name="edit" size={12} color="black" />
+                      <Text className='ml-1 font-bold'>Edit</Text>
+                    </Pressable>
+                    <Pressable onPress={() => showDeleteTransactionConfirmation(selectedTransaction)} key={selectedTransaction?.id} className='flex flex-row ml-1 items-center border border-b-[2px] border-r-[2px] rounded-lg px-2 py-1'>
+                      <MaterialIcons name="delete" size={12} color="black" />
+                      <Text className='ml-1 font-bold'>Delete</Text>
+                    </Pressable>
                   </View>
                 </View>
               </ScrollView>

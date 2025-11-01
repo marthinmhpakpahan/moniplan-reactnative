@@ -66,6 +66,19 @@ export const formatTime = (value: Date) => {
 	return parsed_hours + ":" + parsed_minutes + ":" + parsed_seconds;
 };
 
+export const convertObjectToParams = (obj : any) => {
+	let keys = Object.keys(obj);
+	let formatted_params = "";
+	for(let index=0; index<keys.length; index++) {
+		let value = obj[keys[index]]
+		if(formatted_params != "") {
+			formatted_params += "&"
+		}
+		formatted_params += (keys[index] + "=" + value)
+	}
+	return formatted_params
+}
+
 export const formatCurrency = (value: number) => {
 	return new Intl.NumberFormat().format(value);
 }
@@ -97,6 +110,14 @@ export const redirectToDetailCategoryPage = (id: string, name: string, amount: n
 export const redirectToLoginPage = () => {
 	router.push("/login");
 };
+
+export const redirectToEditTransactionPage = (transaction : any) => {
+	let params = encodeURI(convertObjectToParams(transaction))
+	let encodedParams = encodeURI(params).replace(/&/g, '%26')
+	params = new URLSearchParams(transaction).toString()
+	let url = "/update-transaction?" + params as any
+	router.push(url)
+}
 
 export const setupLogout = () => {
 	removeUserSession()

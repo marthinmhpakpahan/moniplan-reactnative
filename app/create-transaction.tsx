@@ -97,8 +97,8 @@ export default function CreateTransaction() {
 
     return (
         <GestureHandlerRootView>
-            <View className='flex flex-col'>
-                <View className='flex flex-row items-center mt-8 pb-3 px-2 border-b-2 border-gray-500'>
+            <View className='flex flex-col bg-white'>
+                <View className='flex flex-row items-center mt-8 pb-3 px-2 border-b-2 border-gray-500 bg-white'>
                     <Pressable onPress={redirectToDashboard} className='px-2 py-1'>
                         <FontAwesome5 name="arrow-left" size={24} />
                     </Pressable>

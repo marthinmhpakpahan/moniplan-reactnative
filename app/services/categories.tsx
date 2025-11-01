@@ -62,3 +62,21 @@ export const updateCategory = async (_category_id: string, _name: string, _month
     throw error;
   }
 };
+
+export const deleteCategory = async (category_id: string) => {
+  try {
+    const user = await getUserSession()
+    const response = await axios.get(BASE_URL + "/api/v1/category/delete/"+category_id, {
+      headers: {
+        "Authorization": "Bearer " + user.token
+      }
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      console.error("Delete Category failed:", error.response.data);
+      throw new Error(error.response.data.message || "Delete Category failed");
+    }
+    throw error;
+  }
+};

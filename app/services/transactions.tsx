@@ -24,7 +24,7 @@ export const indexTransaction = async (_month: Number, _year: Number, _category_
   }
 };
 
-export const createTransaction = async (_transaction_date: string , _category_id: number, _amount: number, _type: string, _remarks: string) => {
+export const createTransaction = async (_transaction_date: string, _category_id: number, _amount: number, _type: string, _remarks: string) => {
   try {
     const user = await getUserSession()
     const response = await axios.post(BASE_URL + "/api/v1/transaction/create", {
@@ -62,10 +62,12 @@ export const deleteTransaction = async (transaction_id: string) => {
   }
 };
 
-export const deleteCategory = async (category_id: string) => {
+export const updateTransaction = async (_transaction_id: number, _transaction_date: string, _category_id: number, _amount: number, _type: string, _remarks: string) => {
   try {
     const user = await getUserSession()
-    const response = await axios.get(BASE_URL + "/api/v1/category/delete/"+category_id, {
+    const response = await axios.post(BASE_URL + "/api/v1/transaction/update/"+_transaction_id, {
+      transaction_id: _transaction_id, transaction_date: _transaction_date, category_id: _category_id, amount: _amount, type: _type, remarks: _remarks
+    }, {
       headers: {
         "Authorization": "Bearer " + user.token
       }
@@ -73,8 +75,8 @@ export const deleteCategory = async (category_id: string) => {
     return response.data;
   } catch (error: any) {
     if (error.response) {
-      console.error("Delete Category failed:", error.response.data);
-      throw new Error(error.response.data.message || "Delete Category failed");
+      console.error("Update Transaction failed:", error.response.data);
+      throw new Error(error.response.data.message || "Update Transaction failed");
     }
     throw error;
   }
