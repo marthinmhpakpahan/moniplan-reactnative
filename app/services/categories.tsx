@@ -23,11 +23,11 @@ export const indexCategory = async (_month: Number, _year: Number) => {
   }
 };
 
-export const createCategory = async (_name: string, _month: Number, _year: Number, _amount: Number) => {
+export const createCategory = async (_name: string, _month: Number, _year: Number, _amount: Number, _remarks: string) => {
   try {
     const user = await getUserSession()
     const response = await axios.post(BASE_URL + "/api/v1/category/create", {
-      name: _name, month: _month, year: _year, amount: _amount
+      name: _name, month: _month, year: _year, amount: _amount, remarks: _remarks
     }, {
       headers: {
         "Authorization": "Bearer " + user.token

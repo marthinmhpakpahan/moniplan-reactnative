@@ -16,8 +16,8 @@ import { Transactions } from '../models/transactions';
 
 // SERVICES
 import { createCategory, indexCategory, updateCategory } from '../services/categories';
-import { deleteTransaction, indexTransaction } from '../services/transactions';
-import { formatCurrency, getCurrentDate, getDetailDate, redirectToDetailCategoryPage, setupLogout, showShortToast } from '@/utils/helper';
+import { deleteCategory, deleteTransaction, indexTransaction } from '../services/transactions';
+import { formatCategoryName, formatCurrency, getCurrentDate, getDetailDate, redirectToDetailCategoryPage, setupLogout, showShortToast } from '@/utils/helper';
 
 export default function Dashboard() {
   const { shouldRefreshData } = useLocalSearchParams();
@@ -39,6 +39,7 @@ export default function Dashboard() {
 
   const [inputCategoryName, setInputCategoryName] = useState("");
   const [inputTotalBudget, setInputTotalBudget] = useState("");
+  const [inputRemarks, setInputRemarks] = useState("");
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [totalTransaction, setTotalTransaction] = useState(0);
@@ -72,6 +73,13 @@ export default function Dashboard() {
   const handleSheetEditCategoryChanges = useCallback((index: number) => {
   }, []);
 
+  const deleteCategorySheetModalRef = useRef<BottomSheetModal>(null);
+  const handlePresentDeleteCategoryModalPress = useCallback(() => {
+    deleteCategorySheetModalRef.current?.present();
+  }, []);
+  const handleSheetDeleteCategoryChanges = useCallback((index: number) => {
+  }, []);
+
   const detailTransactionSheetModalRef = useRef<BottomSheetModal>(null);
   const handlePresentDetailTransactionModalPress = useCallback(() => {
     detailTransactionSheetModalRef.current?.present();
@@ -86,6 +94,18 @@ export default function Dashboard() {
       deleteTransactionSheetModalRef.current?.close()
       deleteTransactionSheetModalRef.current?.dismiss()
       showShortToast("Transaction deleted successfully!")
+    }
+  };
+
+  const handleDeleteCategory = async (category_id: string) => {
+    const response = await deleteCategory(category_id);
+    if (!response.error) {
+      setRefreshCategories(!refreshCategories)
+      deleteCategorySheetModalRef.current?.close()
+      deleteCategorySheetModalRef.current?.dismiss()
+      setTimeout(() =>detailCategorySheetModalRef.current?.close(), 200);
+      setTimeout(() =>detailCategorySheetModalRef.current?.dismiss(), 200);
+      showShortToast("Category deleted successfully!")
     }
   };
 
@@ -154,6 +174,11 @@ export default function Dashboard() {
     handlePresentDeleteTransactionModalPress()
   }
 
+  function showDeleteCategoryConfirmation() {
+    setSelectedCategory(selectedCategory)
+    handlePresentDeleteCategoryModalPress()
+  }
+
   function showEditCategoryForm() {
     setInputCategoryName(selectedCategory?.name || "");
     setInputTotalBudget(selectedCategory?.amount.toString() || "")
@@ -165,7 +190,7 @@ export default function Dashboard() {
   async function handleAddCategory() {
     try {
       const response = await createCategory(
-        inputCategoryName, month, year, parseInt(inputTotalBudget)
+        inputCategoryName, month, year, parseInt(inputTotalBudget), inputRemarks
       );
       setRefreshCategories(!refreshCategories)
       bottomSheetModalRef.current?.close();
@@ -362,6 +387,17 @@ export default function Dashboard() {
                     />
                   </View>
 
+                  <View className='mt-2'>
+                    <Text className='text-slate-800 py-1 font-semibold'>Remarks</Text>
+                    <BottomSheetTextInput
+                      value={inputRemarks}
+                      multiline numberOfLines={3}
+                      textAlignVertical="top"
+                      onChangeText={setInputRemarks}
+                      className='border border-black rounded-lg text-black h-[70px]'
+                    />
+                  </View>
+
                   <View className='flex flex-row justify-end mt-4'>
                     <Pressable onPress={handleAddCategory} className='border-2 border-black px-8 py-2 rounded-lg'>
                       <Text className='text-black font-bold'>Save</Text>
@@ -403,7 +439,7 @@ export default function Dashboard() {
                   </Text>
                   <View className='mt-3'>
                     <Text className='text-slate-600 py-1'>Name</Text>
-                    <Text className='font-bold text-2xl'>{selectedCategory?.name.toUpperCase()}</Text>
+                    <Text className='font-bold text-2xl'>{formatCategoryName(selectedCategory?.name || "")}</Text>
                   </View>
                   <View className='mt-1'>
                     <Text className='text-slate-600 py-1'>Total Budget</Text>
@@ -427,10 +463,10 @@ export default function Dashboard() {
                       <FontAwesome5 name="edit" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Edit</Text>
                     </Pressable>
-                    <View className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                    <Pressable onPress={() => { showDeleteCategoryConfirmation() }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
                       <MaterialIcons name="delete" size={18} color="black" />
                       <Text className='ml-1 font-bold text-lg'>Delete</Text>
-                    </View>
+                    </Pressable>
                   </View>
                 </View>
               </ScrollView>
@@ -547,6 +583,63 @@ export default function Dashboard() {
                   <View className='flex flex-row justify-end mt-4'>
                     <Pressable onPress={handleEditCategory} className='border-2 border-black px-8 py-2 rounded-lg'>
                       <Text className='text-black font-bold'>Save</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </BottomSheetView>
+        </BottomSheetModal>
+        <BottomSheetModal
+          ref={deleteCategorySheetModalRef}
+          onChange={handleSheetDeleteCategoryChanges}
+          keyboardBehavior="interactive"
+          keyboardBlurBehavior="restore"
+          enablePanDownToClose={true}
+          backdropComponent={(props: any) => (
+            <BottomSheetBackdrop
+              {...props}
+              appearsOnIndex={0}
+              disappearsOnIndex={-1}
+              pressBehavior="close" // 👈 this makes outside tap close the modal
+            />
+          )}
+        >
+          <BottomSheetView style={{ flex: 1 }}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+              <ScrollView
+                className='px-2 mx-2 mt-2'
+                keyboardShouldPersistTaps="handled"
+              >
+                <View className='flex flex-col pt-1 pb-5 px-3 bg-white z-20'>
+                  <Text className='text-2xl font-bold text-center uppercase border-b-2'>
+                    Delete Confirmation!
+                  </Text>
+                  <View className='mt-3'>
+                    <Text className='text-black py-1 text-center text-xl'>Are you sure you want to delete this category?</Text>
+                    <Text className='text-black py-1 text-center text-xl'>It will delete all of transactions related to this category!</Text>
+                    <View className='flex flex-row justify-center items-center mt-6'>
+                      <Text className='ml-2 text-lg font-bold'>{formatCategoryName(selectedCategory?.name || "")}</Text>
+                    </View>
+                    <View className='flex flex-row justify-center items-center mt-1'>
+                      <Text className='ml-2 text-xl font-bold'>Rp. {selectedCategory?.amount}</Text>
+                    </View>
+                    <View className='flex flex-row justify-center items-center mt-1'>
+                      <Text className='ml-2 text-lg'>{selectedCategory?.remarks || "-"}</Text>
+                    </View>
+                  </View>
+                  <View className='flex flex-row justify-center mt-6'>
+                    <Pressable onPress={() => { handleDeleteCategory(selectedCategory?.id || "") }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                      <FontAwesome name="check-square-o" size={18} color="black" />
+                      <Text className='ml-1 font-bold text-lg'>Yes</Text>
+                    </Pressable>
+                    <Pressable onPress={() => { deleteCategorySheetModalRef.current?.close }} className='flex flex-row ml-1 items-center border border-b-[3px] border-r-[3px] rounded-lg px-3 py-1'>
+                      <FontAwesome name="close" size={18} color="black" />
+                      <Text className='ml-1 font-bold text-lg'>Cancel</Text>
                     </Pressable>
                   </View>
                 </View>

@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View, Image } from "react-native";
 import { getUserSession } from '../utils/session';
-import { Fontisto } from '@expo/vector-icons';
+import { FontAwesome5, Fontisto } from '@expo/vector-icons';
 
 export default function Index() {
     const [userLoggedIn, setUserLoggedIn] = useState({});

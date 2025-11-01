@@ -70,6 +70,14 @@ export const formatCurrency = (value: number) => {
 	return new Intl.NumberFormat().format(value);
 }
 
+export const formatCategoryName = (value: string) => {
+	let formatted_value = "";
+	if(value != "") {
+		formatted_value = value.replaceAll("_", " ")
+	}
+	return formatted_value.toUpperCase();
+}
+
 export const getDetailDate = (value: string) => {
 	return value.split(" ");
 };

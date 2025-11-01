@@ -7,6 +7,7 @@ export interface Categories {
     amount: number;
     remaining_budget: number;
     total_transaction: number;
+    remarks: string;
 }
 
 export const getDetailCategory = (category: Categories, transactions: Transactions[]) => {

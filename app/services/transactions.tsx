@@ -55,8 +55,26 @@ export const deleteTransaction = async (transaction_id: string) => {
     return response.data;
   } catch (error: any) {
     if (error.response) {
-      console.error("Create Category failed:", error.response.data);
-      throw new Error(error.response.data.message || "Create Category failed");
+      console.error("Delete Transaction failed:", error.response.data);
+      throw new Error(error.response.data.message || "Delete Transaction failed");
+    }
+    throw error;
+  }
+};
+
+export const deleteCategory = async (category_id: string) => {
+  try {
+    const user = await getUserSession()
+    const response = await axios.get(BASE_URL + "/api/v1/category/delete/"+category_id, {
+      headers: {
+        "Authorization": "Bearer " + user.token
+      }
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      console.error("Delete Category failed:", error.response.data);
+      throw new Error(error.response.data.message || "Delete Category failed");
     }
     throw error;
   }
